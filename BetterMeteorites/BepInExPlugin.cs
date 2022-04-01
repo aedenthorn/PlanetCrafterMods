@@ -21,6 +21,7 @@ namespace BetterMeteorites
         public static ConfigEntry<bool> addSpecialAsteroids;
         public static ConfigEntry<float> uraniumChance;
         public static ConfigEntry<float> iridiumChance;
+        public static ConfigEntry<float> asteroidResourceMult;
 
         public static void Dbgl(string str = "", bool pref = true)
         {
@@ -33,10 +34,10 @@ namespace BetterMeteorites
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
-            addSpecialAsteroids = Config.Bind<bool>("General", "AddSpecialAsteroids", true, "Add iridium and uranium asteroids to event list");
-
-            uraniumChance = Config.Bind<float>("Options", "UraniumChance", 0.05f, "Chance of replacing asteroid resource with uranium");
-            iridiumChance = Config.Bind<float>("Options", "IridiumChance", 0.05f, "Chance of replacing asteroid resource with iridium");
+            addSpecialAsteroids = Config.Bind<bool>("Options", "AddSpecialMeteorite", false, "Add iridium and uranium meteorite to event list");
+            asteroidResourceMult = Config.Bind<float>("Options", "MeteoriteResourceMult", 1f, "Resource per meteorite multiplier");
+            uraniumChance = Config.Bind<float>("Options", "UraniumChance", 0.05f, "Chance of adding uranium to meteorite (1.0 = 100% chance)");
+            iridiumChance = Config.Bind<float>("Options", "IridiumChance", 0.05f, "Chance of adding iridium to meteorite (1.0 = 100% chance)");
 
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
@@ -51,6 +52,15 @@ namespace BetterMeteorites
                 if (!modEnabled.Value || !addSpecialAsteroids.Value)
                     return;
                 Dbgl($"Start meteo handler");
+
+                __instance.eventChanceOnOneHundred = 100;
+
+                for (int i = __instance.meteoEvents.Count - 1; i >= 0; i--)
+                {
+                    if (__instance.meteoEvents[i].asteroidEventData == null)
+                        __instance.meteoEvents.RemoveAt(i);
+                }
+                return;
                 MeteoSendInSpace s = FindObjectOfType<MeteoSendInSpace>();
                 if (s != null)
                 {
@@ -107,14 +117,13 @@ namespace BetterMeteorites
                 }
             }
         }
-        [HarmonyPatch(typeof(Asteroid), nameof(Asteroid.GetAssociatedGroups))]
-        static class Asteroid_GetAssociatedGroups_Patch
+        [HarmonyPatch(typeof(AsteroidsImpactHandler), nameof(AsteroidsImpactHandler.CreateImpact))]
+        static class Asteroid_CreateImpact_Patch
         {
-            static bool Prefix(Asteroid __instance, ref List<GroupItem> __result)
+            static void Prefix(AsteroidsImpactHandler __instance, ref Asteroid _asteroid)
             {
                 if (!modEnabled.Value || __instance.name.Contains("Uranium") || __instance.name.Contains("Iridium"))
-                    return true;
-                Dbgl($"Getting better asteroid");
+                    return;
                 double r = Random.value;
                 if (r < uraniumChance.Value)
                 {
@@ -124,9 +133,13 @@ namespace BetterMeteorites
                         var e = s.meteoEvents.Find(d => d.name.Contains("Uranium"));
                         if (e != null)
                         {
-                            __result = AccessTools.FieldRefAccess<Asteroid, List<GroupItem>>(e.asteroidEventData.asteroidGameObject.GetComponent<Asteroid>(), "associatedGroups");
-                            Dbgl($"Got uranium asteroid");
-                            return false;
+                            var a = e.asteroidEventData.asteroidGameObject.GetComponent<Asteroid>();
+                            var groups = AccessTools.FieldRefAccess<Asteroid, List<GroupItem>>(_asteroid, "associatedGroups");
+                            foreach (GroupDataItem groupDataItem in a.groupsSelected)
+                            {
+                                groups.Add((GroupItem)GroupsHandler.GetGroupViaId(groupDataItem.id));
+                            }
+                            //Dbgl($"Got uranium asteroid");
                         }
                     }
                 }
@@ -138,13 +151,26 @@ namespace BetterMeteorites
                         var e = s.meteoEvents.Find(d => d.name.Contains("Iridium"));
                         if (e != null)
                         {
-                            __result = AccessTools.FieldRefAccess<Asteroid, List<GroupItem>>(e.asteroidEventData.asteroidGameObject.GetComponent<Asteroid>(), "associatedGroups");
-                            Dbgl($"Got iridium asteroid");
-                            return false;
+                            var a = e.asteroidEventData.asteroidGameObject.GetComponent<Asteroid>();
+                            var groups = AccessTools.FieldRefAccess<Asteroid, List<GroupItem>>(_asteroid, "associatedGroups");
+                            foreach (GroupDataItem groupDataItem in a.groupsSelected)
+                            {
+                                groups.Add((GroupItem)GroupsHandler.GetGroupViaId(groupDataItem.id));
+                            }
+                            //Dbgl($"Got iridium asteroid");
                         }
                     }
                 }
-                return true;
+            }
+        }
+        [HarmonyPatch(typeof(Asteroid), nameof(Asteroid.GetNumberOfResourceInDebris))]
+        static class Asteroid_GetNumberOfResourceInDebris_Patch
+        {
+            static void Postfix(Asteroid __instance, ref float __result)
+            {
+                if (!modEnabled.Value)
+                    return;
+                __result *= asteroidResourceMult.Value;
             }
         }
     }
