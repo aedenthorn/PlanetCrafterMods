@@ -5,21 +5,23 @@ using SpaceCraft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace BetterMeteorites
+namespace BetterJetPack
 {
-    [BepInPlugin("aedenthorn.BetterMeteorites", "Better Meteorites", "0.1.1")]
+    [BepInPlugin("aedenthorn.BetterJetPack", "Better JetPack", "0.1.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
 
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> isDebug;
-        public static ConfigEntry<bool> addSpecialAsteroids;
-        public static ConfigEntry<float> uraniumChance;
+        public static ConfigEntry<bool> removeDropEffect;
+        public static ConfigEntry<float> speedMult;
         public static ConfigEntry<float> iridiumChance;
         public static ConfigEntry<float> asteroidResourceMult;
 
@@ -34,41 +36,45 @@ namespace BetterMeteorites
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
-            addSpecialAsteroids = Config.Bind<bool>("Options", "AddSpecialMeteorites", false, "Add iridium and uranium meteorites to event list");
-            asteroidResourceMult = Config.Bind<float>("Options", "MeteoriteResourceMult", 1f, "Resource per meteorite multiplier");
-            uraniumChance = Config.Bind<float>("Options", "UraniumChance", 0.05f, "Chance of adding uranium to ordinary meteorite (1.0 = 100% chance)");
-            iridiumChance = Config.Bind<float>("Options", "IridiumChance", 0.05f, "Chance of adding iridium to ordinary meteorite (1.0 = 100% chance)");
-
+            removeDropEffect = Config.Bind<bool>("Options", "RemoveDropEffect", true, "Remove the sharp drop effect when you jetpack off a cliff");
+            speedMult = Config.Bind<float>("Options", "SpeedMult", 1f, "Jetpack speed multiplier");
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
             Dbgl("Plugin awake");
         }
 
-        [HarmonyPatch(typeof(MeteoHandler), "Start")]
-        static class MeteoHandler_Start_Patch
+        [HarmonyPatch(typeof(PlayerMovable), nameof(PlayerMovable.UpdatePlayerMovement))]
+        static class PlayerMovable_UpdatePlayerMovement_Patch
         {
-            static void Postfix(MeteoHandler __instance)
+            public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
-                if (!modEnabled.Value || !addSpecialAsteroids.Value)
-                    return;
-                Dbgl($"Start meteo handler");
-
-                MeteoSendInSpace s = FindObjectOfType<MeteoSendInSpace>();
-                if (s != null)
+                Dbgl("Transpiling PlayerMovable.UpdatePlayerMovement");
+                var codes = new List<CodeInstruction>(instructions);
+                bool found = false;
+                for (int i = 0; i < codes.Count; i++)
                 {
-                    var e = s.meteoEvents.Find(d => d.name.Contains("Uranium"));
-                    if (e != null)
+                    if (!found && i < codes.Count - 2 && codes[i + 2].opcode == OpCodes.Callvirt && (MethodInfo)codes[i + 2].operand == AccessTools.Method(typeof(PlayerGroundRelation), nameof(PlayerGroundRelation.GetGroundDistance)))
                     {
-                        __instance.meteoEvents.Add(e);
-                        Dbgl($"added uranium event");
+                        Dbgl("Removing fall set on jetpack");
+                        found = true;
                     }
-                    e = s.meteoEvents.Find(d => d.name.Contains("Iridium"));
-                    if (e != null)
+                    if (found)
                     {
-                        __instance.meteoEvents.Add(e);
-                        Dbgl($"added iridium event");
+                        if (codes[i].opcode == OpCodes.Ldfld && (FieldInfo)codes[i].operand == AccessTools.Field(typeof(PlayerMovable), "m_Fall") && codes[i + 1].opcode == OpCodes.Stloc_3)
+                        {
+                            codes[i].opcode = OpCodes.Nop;
+                            codes[i].operand = null;
+                            codes[i + 1].opcode = OpCodes.Nop;
+                            codes[i + 1].operand = null;
+                            break;
+                        }
+
+                        codes[i].opcode = OpCodes.Nop;
+                        codes[i].operand = null;
                     }
                 }
+
+                return codes.AsEnumerable();
             }
         }
         //[HarmonyPatch(typeof(MeteoHandler), nameof(MeteoHandler.LaunchSpecificMeteoEvent))]
@@ -80,7 +86,7 @@ namespace BetterMeteorites
                     return;
                 Dbgl($"Getting asteroid meteo event");
                 double r = Random.value;
-                if (r < uraniumChance.Value)
+                if (r < speedMult.Value)
                 {
                     MeteoSendInSpace s = FindObjectOfType<MeteoSendInSpace>();
                     if (s != null)
@@ -94,7 +100,7 @@ namespace BetterMeteorites
                         }
                     }
                 }
-                else if (r < uraniumChance.Value + iridiumChance.Value)
+                else if (r < speedMult.Value + iridiumChance.Value)
                 {
                     MeteoSendInSpace s = FindObjectOfType<MeteoSendInSpace>();
                     if (s != null)
@@ -117,7 +123,7 @@ namespace BetterMeteorites
                 if (!modEnabled.Value || __instance.name.Contains("Uranium") || __instance.name.Contains("Iridium"))
                     return;
                 double r = Random.value;
-                if (r < uraniumChance.Value)
+                if (r < speedMult.Value)
                 {
                     MeteoSendInSpace s = FindObjectOfType<MeteoSendInSpace>();
                     if (s != null)
@@ -135,7 +141,7 @@ namespace BetterMeteorites
                         }
                     }
                 }
-                else if (r < uraniumChance.Value + iridiumChance.Value)
+                else if (r < speedMult.Value + iridiumChance.Value)
                 {
                     MeteoSendInSpace s = FindObjectOfType<MeteoSendInSpace>();
                     if (s != null)
