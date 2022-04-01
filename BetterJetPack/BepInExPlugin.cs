@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace BetterJetPack
 {
-    [BepInPlugin("aedenthorn.BetterJetPack", "Better JetPack", "0.1.0")]
+    [BepInPlugin("aedenthorn.BetterJetPack", "Better JetPack", "0.1.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -45,8 +45,11 @@ namespace BetterJetPack
         {
             public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
-                Dbgl("Transpiling PlayerMovable.UpdatePlayerMovement");
                 var codes = new List<CodeInstruction>(instructions);
+                if(!modEnabled.Value || !removeDropEffect.Value)
+                    return codes.AsEnumerable();
+
+                Dbgl("Transpiling PlayerMovable.UpdatePlayerMovement");
                 for (int i = 0; i < codes.Count; i++)
                 {
                     if (i < codes.Count - 1 && codes[i].opcode == OpCodes.Ldc_R4 && (float)codes[i].operand == -5 && codes[i + 1].opcode == OpCodes.Ldc_R4 && (float)codes[i + 1].operand == 50)
@@ -56,7 +59,6 @@ namespace BetterJetPack
                         break;
                     }
                 }
-
                 return codes.AsEnumerable();
             }
             static void Prefix(PlayerMovable __instance, ref float ___jetpackFactor, ref float __state)
