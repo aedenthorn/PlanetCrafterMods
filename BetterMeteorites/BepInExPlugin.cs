@@ -71,44 +71,6 @@ namespace BetterMeteorites
                 }
             }
         }
-        //[HarmonyPatch(typeof(MeteoHandler), nameof(MeteoHandler.LaunchSpecificMeteoEvent))]
-        static class MeteoHandler_LaunchSpecificMeteoEvent_Patch
-        {
-            static void Prefix(MeteoHandler __instance, ref MeteoEventData _meteoEvent)
-            {
-                if (!modEnabled.Value)
-                    return;
-                Dbgl($"Getting asteroid meteo event");
-                double r = Random.value;
-                if (r < uraniumChance.Value)
-                {
-                    MeteoSendInSpace s = FindObjectOfType<MeteoSendInSpace>();
-                    if (s != null)
-                    {
-                        var e = s.meteoEvents.Find(d => d.name.Contains("Uranium"));
-                        if (e != null)
-                        {
-                            _meteoEvent = e;
-                            Dbgl($"Got uranium asteroid");
-                            return;
-                        }
-                    }
-                }
-                else if (r < uraniumChance.Value + iridiumChance.Value)
-                {
-                    MeteoSendInSpace s = FindObjectOfType<MeteoSendInSpace>();
-                    if (s != null)
-                    {
-                        var e = s.meteoEvents.Find(d => d.name.Contains("Iridium"));
-                        if (e != null)
-                        {
-                            _meteoEvent = e;
-                            Dbgl($"Got iridium asteroid");
-                        }
-                    }
-                }
-            }
-        }
         [HarmonyPatch(typeof(AsteroidsImpactHandler), nameof(AsteroidsImpactHandler.CreateImpact))]
         static class Asteroid_CreateImpact_Patch
         {

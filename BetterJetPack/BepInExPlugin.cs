@@ -2,14 +2,11 @@
 using BepInEx.Configuration;
 using HarmonyLib;
 using SpaceCraft;
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 namespace BetterJetPack
 {
@@ -50,125 +47,30 @@ namespace BetterJetPack
             {
                 Dbgl("Transpiling PlayerMovable.UpdatePlayerMovement");
                 var codes = new List<CodeInstruction>(instructions);
-                bool found = false;
                 for (int i = 0; i < codes.Count; i++)
                 {
-                    if (!found && i < codes.Count - 2 && codes[i + 2].opcode == OpCodes.Callvirt && (MethodInfo)codes[i + 2].operand == AccessTools.Method(typeof(PlayerGroundRelation), nameof(PlayerGroundRelation.GetGroundDistance)))
+                    if (i < codes.Count - 1 && codes[i].opcode == OpCodes.Ldc_R4 && (float)codes[i].operand == -5 && codes[i + 1].opcode == OpCodes.Ldc_R4 && (float)codes[i + 1].operand == 50)
                     {
                         Dbgl("Removing fall set on jetpack");
-                        found = true;
-                    }
-                    if (found)
-                    {
-                        if (codes[i].opcode == OpCodes.Ldfld && (FieldInfo)codes[i].operand == AccessTools.Field(typeof(PlayerMovable), "m_Fall") && codes[i + 1].opcode == OpCodes.Stloc_3)
-                        {
-                            codes[i].opcode = OpCodes.Nop;
-                            codes[i].operand = null;
-                            codes[i + 1].opcode = OpCodes.Nop;
-                            codes[i + 1].operand = null;
-                            break;
-                        }
-
-                        codes[i].opcode = OpCodes.Nop;
-                        codes[i].operand = null;
+                        codes[i + 1].operand = 20f;
+                        break;
                     }
                 }
 
                 return codes.AsEnumerable();
             }
-        }
-        //[HarmonyPatch(typeof(MeteoHandler), nameof(MeteoHandler.LaunchSpecificMeteoEvent))]
-        static class MeteoHandler_LaunchSpecificMeteoEvent_Patch
-        {
-            static void Prefix(MeteoHandler __instance, ref MeteoEventData _meteoEvent)
+            static void Prefix(PlayerMovable __instance, ref float ___jetpackFactor, ref float __state)
             {
                 if (!modEnabled.Value)
                     return;
-                Dbgl($"Getting asteroid meteo event");
-                double r = Random.value;
-                if (r < speedMult.Value)
-                {
-                    MeteoSendInSpace s = FindObjectOfType<MeteoSendInSpace>();
-                    if (s != null)
-                    {
-                        var e = s.meteoEvents.Find(d => d.name.Contains("Uranium"));
-                        if (e != null)
-                        {
-                            _meteoEvent = e;
-                            Dbgl($"Got uranium asteroid");
-                            return;
-                        }
-                    }
-                }
-                else if (r < speedMult.Value + iridiumChance.Value)
-                {
-                    MeteoSendInSpace s = FindObjectOfType<MeteoSendInSpace>();
-                    if (s != null)
-                    {
-                        var e = s.meteoEvents.Find(d => d.name.Contains("Iridium"));
-                        if (e != null)
-                        {
-                            _meteoEvent = e;
-                            Dbgl($"Got iridium asteroid");
-                        }
-                    }
-                }
+                __state = ___jetpackFactor;
+                ___jetpackFactor *= speedMult.Value;
             }
-        }
-        [HarmonyPatch(typeof(AsteroidsImpactHandler), nameof(AsteroidsImpactHandler.CreateImpact))]
-        static class Asteroid_CreateImpact_Patch
-        {
-            static void Prefix(AsteroidsImpactHandler __instance, ref Asteroid _asteroid)
-            {
-                if (!modEnabled.Value || __instance.name.Contains("Uranium") || __instance.name.Contains("Iridium"))
-                    return;
-                double r = Random.value;
-                if (r < speedMult.Value)
-                {
-                    MeteoSendInSpace s = FindObjectOfType<MeteoSendInSpace>();
-                    if (s != null)
-                    {
-                        var e = s.meteoEvents.Find(d => d.name.Contains("Uranium"));
-                        if (e != null)
-                        {
-                            var a = e.asteroidEventData.asteroidGameObject.GetComponent<Asteroid>();
-                            var groups = AccessTools.FieldRefAccess<Asteroid, List<GroupItem>>(_asteroid, "associatedGroups");
-                            foreach (GroupDataItem groupDataItem in a.groupsSelected)
-                            {
-                                groups.Add((GroupItem)GroupsHandler.GetGroupViaId(groupDataItem.id));
-                            }
-                            //Dbgl($"Got uranium asteroid");
-                        }
-                    }
-                }
-                else if (r < speedMult.Value + iridiumChance.Value)
-                {
-                    MeteoSendInSpace s = FindObjectOfType<MeteoSendInSpace>();
-                    if (s != null)
-                    {
-                        var e = s.meteoEvents.Find(d => d.name.Contains("Iridium"));
-                        if (e != null)
-                        {
-                            var a = e.asteroidEventData.asteroidGameObject.GetComponent<Asteroid>();
-                            var groups = AccessTools.FieldRefAccess<Asteroid, List<GroupItem>>(_asteroid, "associatedGroups");
-                            foreach (GroupDataItem groupDataItem in a.groupsSelected)
-                            {
-                                groups.Add((GroupItem)GroupsHandler.GetGroupViaId(groupDataItem.id));
-                            }
-                            //Dbgl($"Got iridium asteroid");
-                        }
-                    }
-                }
-            }
-        }
-        [HarmonyPatch(typeof(Asteroid), nameof(Asteroid.GetNumberOfResourceInDebris))]
-        static class Asteroid_GetNumberOfResourceInDebris_Patch
-        {
-            static void Postfix(Asteroid __instance, ref float __result)
+            static void Postfix(PlayerMovable __instance, ref float ___jetpackFactor, ref float __state)
             {
                 if (!modEnabled.Value)
                     return;
-                __result *= asteroidResourceMult.Value;
+                ___jetpackFactor = __state;
             }
         }
     }
