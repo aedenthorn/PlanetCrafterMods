@@ -34,12 +34,9 @@ namespace DrillSound
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
-
-            muteSound = Config.Bind<bool>("Options", "MuteSound", false, "Mute sound entirely");
-            fixedPitch = Config.Bind<bool>("Options", "FixedPitch", true, "Use fixed pitch");
-            pitch = Config.Bind<float>("Options", "Pitch", 0.5f, "Pitch if using fixed pitch.");
-            volume = Config.Bind<float>("Options", "Volume", 0.5f, "Volume of drill sound.");
-
+            muteSound = Config.Bind<bool>("Options", "MuteSound", false, "Mute drill sound entirely.");
+            pitch = Config.Bind<float>("Options", "Pitch", 0.5f, "Drill sound pitch.");
+            volume = Config.Bind<float>("Options", "Volume", 0.25f, "Drill sound volume.");
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
             Dbgl("Plugin awake");
@@ -53,21 +50,16 @@ namespace DrillSound
             {
                 if (!modEnabled.Value || !_play)
                     return true;
-                Debug.Log($"play recolt speed %: {_changeSpeedPercentage}");
                 if (muteSound.Value)
                 {
                     _play = false;
                     return true;
                 }
                 __instance.soundContainerRecolt.volume = volume.Value;
-                if (fixedPitch.Value)
-                {
-                    __instance.soundContainerRecolt.pitch = pitch.Value;
-                    __instance.recoltMixer.SetFloat("RecoltPitch", 1f / (1f + _changeSpeedPercentage / 100f));
-                    __instance.soundContainerRecolt.Play();
-                    return false;
-                }
-                return true;
+                __instance.soundContainerRecolt.pitch = 1f + _changeSpeedPercentage / 100f;
+                __instance.recoltMixer.SetFloat("RecoltPitch", 1 / (1f + _changeSpeedPercentage / 100f) * pitch.Value);
+                __instance.soundContainerRecolt.Play();
+                return false;
             }
         }
     }

@@ -68,6 +68,11 @@
       <HintPath>$(ManagedDataPath)\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="com.mijugames.miju-tools.dll">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(ManagedDataPath)\com.mijugames.miju-tools.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
 
   <!-- Add Unity references -->
