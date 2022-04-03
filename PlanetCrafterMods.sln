@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CreativeMenu", "CreativeMen
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomFlashlight", "CustomFlashlight\CustomFlashlight.csproj", "{E7C97651-EEA0-4EC7-8CC2-89E5247B7095}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InventoryCustomization", "InventoryCustomization\InventoryCustomization.csproj", "{8E8BE5A9-F6F7-4BC0-9AA4-A9A77766470B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StorageCustomization", "StorageCustomization\StorageCustomization.csproj", "{3A47C9BC-3334-420A-BD4F-A60F3BED05D9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,10 +41,10 @@ Global
 		{E7C97651-EEA0-4EC7-8CC2-89E5247B7095}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E7C97651-EEA0-4EC7-8CC2-89E5247B7095}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E7C97651-EEA0-4EC7-8CC2-89E5247B7095}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8E8BE5A9-F6F7-4BC0-9AA4-A9A77766470B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8E8BE5A9-F6F7-4BC0-9AA4-A9A77766470B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8E8BE5A9-F6F7-4BC0-9AA4-A9A77766470B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8E8BE5A9-F6F7-4BC0-9AA4-A9A77766470B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A47C9BC-3334-420A-BD4F-A60F3BED05D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A47C9BC-3334-420A-BD4F-A60F3BED05D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A47C9BC-3334-420A-BD4F-A60F3BED05D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A47C9BC-3334-420A-BD4F-A60F3BED05D9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
