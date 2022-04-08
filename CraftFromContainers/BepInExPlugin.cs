@@ -11,7 +11,7 @@ using Debug = UnityEngine.Debug;
 
 namespace CraftFromContainers
 {
-    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.1.0")]
+    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.1.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -35,10 +35,13 @@ namespace CraftFromContainers
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
-            toggleKey = Config.Bind<string>("Options", "ToggleKey", "home", "Key to toggle pulling");
+            toggleKey = Config.Bind<string>("Options", "ToggleKey", "<Keyboard>/home", "Key to toggle pulling");
             range = Config.Bind<float>("Options", "Range", 20f, "Pull range (m)");
 
-            action = new InputAction(binding: $"<Keyboard>/{toggleKey.Value}");
+            if (!toggleKey.Value.Contains("<"))
+                toggleKey.Value = "<Keyboard>/" + toggleKey.Value;
+
+            action = new InputAction(binding: toggleKey.Value);
             action.Enable();
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);

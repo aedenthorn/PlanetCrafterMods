@@ -228,7 +228,7 @@ namespace StorageCustomization
                     t.gameObject.AddComponent<MyEventTrigger>().triggers.AddRange(t.triggers);
                     DestroyImmediate(t);
                 }
-                Dbgl($"time: {s.ElapsedMilliseconds}");
+                Dbgl($"time: {s.ElapsedMilliseconds} ms");
                 s.Stop();
                 yield break;
             }
