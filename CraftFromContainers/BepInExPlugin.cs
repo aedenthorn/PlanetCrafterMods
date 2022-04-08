@@ -1,5 +1,6 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
+using BepInEx.Logging;
 using HarmonyLib;
 using MijuTools;
 using SpaceCraft;
@@ -11,7 +12,7 @@ using Debug = UnityEngine.Debug;
 
 namespace CraftFromContainers
 {
-    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.1.1")]
+    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.1.3")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -25,10 +26,10 @@ namespace CraftFromContainers
 
         private static bool skip;
 
-        public static void Dbgl(string str = "", bool pref = true)
+        public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
             if (isDebug.Value)
-                Debug.Log((pref ? typeof(BepInExPlugin).Namespace + " " : "") + str);
+                context.Logger.Log(logLevel, str);
         }
         private void Awake()
         {
@@ -51,7 +52,7 @@ namespace CraftFromContainers
 
         private void Update()
         {
-            if (action.WasPressedThisFrame())
+            if (modEnabled.Value && Managers.GetManager<WindowsHandler>()?.GetHasUiOpen() == false && action.WasPressedThisFrame())
             {
                 modEnabled.Value = !modEnabled.Value;
                 Dbgl($"Mod enabled: {modEnabled.Value}");
@@ -89,6 +90,14 @@ namespace CraftFromContainers
 
                 for (int i = 0; i < ial.Length; i++)
                 {
+                    try
+                    {
+                        ial[i].GetInventory();
+                    }
+                    catch
+                    {
+                        continue;
+                    }
                     var dist = Vector2.Distance(ial[i].transform.position, pos);
                     if (ial[i].GetInventory() == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() || dist > range.Value)
                         continue;

@@ -1,5 +1,6 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
+using BepInEx.Logging;
 using HarmonyLib;
 using SpaceCraft;
 using System;
@@ -33,10 +34,10 @@ namespace StorageCustomization
         public static ConfigEntry<int> backpack5Adds;
         private static IEnumerator coroutine;
 
-        public static void Dbgl(string str = "", bool pref = true)
+        public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
             if (isDebug.Value)
-                Debug.Log((pref ? typeof(BepInExPlugin).Namespace + " " : "") + str);
+                context.Logger.Log(logLevel, str);
         }
         private void Awake()
         {
@@ -173,7 +174,7 @@ namespace StorageCustomization
                 rtg.anchorMin = new Vector2(0.5f, 0.5f);
                 rtg.sizeDelta = gridSize;
 
-                Dbgl($"Grid: {width}x{height}, grid size {gridSize}, container size {containerSize}, scale {scale}");
+                Dbgl($"Object: {displayer.name}, Grid: {width}x{height}, grid size {gridSize}, container size {containerSize}, scale {scale}");
                 if (containerSize.y < gridSize.y && grid.transform.parent.name != "Mask")
                 {
                     Dbgl($"Adding scroll view");

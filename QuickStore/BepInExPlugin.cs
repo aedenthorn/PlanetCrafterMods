@@ -1,5 +1,6 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
+using BepInEx.Logging;
 using HarmonyLib;
 using MijuTools;
 using SpaceCraft;
@@ -11,7 +12,7 @@ using Debug = UnityEngine.Debug;
 
 namespace QuickStore
 {
-    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.1.0")]
+    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.1.3")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -25,10 +26,10 @@ namespace QuickStore
 
         private static bool skip;
 
-        public static void Dbgl(string str = "", bool pref = true)
+        public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
             if (isDebug.Value)
-                Debug.Log((pref ? typeof(BepInExPlugin).Namespace + " " : "") + str);
+                context.Logger.Log(logLevel, str);
         }
         private void Awake()
         {
@@ -38,16 +39,18 @@ namespace QuickStore
             storeKey = Config.Bind<string>("Options", "StoreKey", "<Keyboard>/l", "Key to store items");
             range = Config.Bind<float>("Options", "Range", 20f, "Store range (m)");
 
+            if (!storeKey.Value.Contains("<"))
+                storeKey.Value = "<Keyboard>/" + storeKey.Value;
+
             action = new InputAction(binding: storeKey.Value);
             action.Enable();
 
-            Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
             Dbgl("Plugin awake");
 
         }
         private void Update()
         {
-            if (action.WasPressedThisFrame())
+            if (modEnabled.Value && Managers.GetManager<WindowsHandler>()?.GetHasUiOpen() == false && action.WasPressedThisFrame())
             {
                 Dbgl("Hotkey Pressed");
 
@@ -67,6 +70,14 @@ namespace QuickStore
             for (int i = 0; i < ial.Length; i++)
             {
                 var dist = Vector2.Distance(ial[i].transform.position, pos);
+                try
+                {
+                    ial[i].GetInventory();
+                }
+                catch
+                {
+                    continue;
+                }
                 if (ial[i].GetInventory() == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() || dist > range.Value || ial[i].GetInventory().IsFull())
                     continue;
                 Dbgl($"checking close inventory {ial[i].name}: {ial[i].transform.position}, {pos}: {dist}m");

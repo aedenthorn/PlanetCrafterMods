@@ -19,6 +19,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CraftFromContainers", "Craf
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuickStore", "QuickStore\QuickStore.csproj", "{37F7DFB5-0460-4E88-B10C-C0A488882850}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpawnObject", "SpawnObject\SpawnObject.csproj", "{D564994D-2C47-45E4-8CCE-262422EBDDC6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +59,10 @@ Global
 		{37F7DFB5-0460-4E88-B10C-C0A488882850}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{37F7DFB5-0460-4E88-B10C-C0A488882850}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{37F7DFB5-0460-4E88-B10C-C0A488882850}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D564994D-2C47-45E4-8CCE-262422EBDDC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D564994D-2C47-45E4-8CCE-262422EBDDC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D564994D-2C47-45E4-8CCE-262422EBDDC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D564994D-2C47-45E4-8CCE-262422EBDDC6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
