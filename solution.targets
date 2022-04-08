@@ -117,6 +117,16 @@
       <HintPath>$(UnityPath)\UnityEngine.InputLegacyModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.InputModule">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(UnityPath)\UnityEngine.InputModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.InputSystem">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(UnityPath)\Unity.InputSystem.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.ParticleSystemModule">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(UnityPath)\UnityEngine.ParticleSystemModule.dll</HintPath>

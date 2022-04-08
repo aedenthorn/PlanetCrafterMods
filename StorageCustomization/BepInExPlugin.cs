@@ -1,32 +1,31 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
-using MijuTools;
 using SpaceCraft;
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using System.Reflection;
-using System.Reflection.Emit;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Debug = UnityEngine.Debug;
 using Image = UnityEngine.UI.Image;
 
 namespace StorageCustomization
 {
-    [BepInPlugin("aedenthorn.StorageCustomization", "Storage Customization", "0.1.0")]
+    [BepInPlugin("aedenthorn.StorageCustomization", "Storage Customization", "0.3.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
 
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> isDebug;
+        public static ConfigEntry<float> iconScale;
         public static ConfigEntry<int> chestStorageSize;
         public static ConfigEntry<int> lockerStorageSize;
         public static ConfigEntry<int> goldenChestStorageSize;
+        public static ConfigEntry<int> waterCollectorStorageSize;
         public static ConfigEntry<int> backpack1Adds;
         public static ConfigEntry<int> backpack2Adds;
         public static ConfigEntry<int> backpack3Adds;
@@ -45,8 +44,10 @@ namespace StorageCustomization
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
+            iconScale = Config.Bind<float>("Options", "IconScale", 1f, "Inventory icon scale");
             chestStorageSize = Config.Bind<int>("Options", "ChestStorageSize", 15, "Chest storage size");
             lockerStorageSize = Config.Bind<int>("Options", "LockerStorageSize", 35, "Locker storage size");
+            waterCollectorStorageSize = Config.Bind<int>("Options", "WaterCollectorStorageSize", 4, "Water Collector storage size");
             goldenChestStorageSize = Config.Bind<int>("Options", "GoldenChestStorageSize", 30, "Golden chest storage size");
             backpack1Adds = Config.Bind<int>("Options", "Backpack1Adds", 4, "Storage added by Backpack 1");
             backpack2Adds = Config.Bind<int>("Options", "Backpack2Adds", 8, "Storage added by Backpack 2");
@@ -102,9 +103,11 @@ namespace StorageCustomization
         {
             static void Prefix(ActionOpenable __instance)
             {
-                if (!modEnabled.Value || !__instance.name.Contains("Container"))
+                if (!modEnabled.Value)
                     return;
                 InventoryAssociated componentOnGameObjectOrInParent = Components.GetComponentOnGameObjectOrInParent<InventoryAssociated>(__instance.gameObject);
+                if (componentOnGameObjectOrInParent == null)
+                    return;
                 Inventory i = componentOnGameObjectOrInParent.GetInventory();
                 if (__instance.name.StartsWith("Container1"))
                 {
@@ -117,6 +120,14 @@ namespace StorageCustomization
                 else if (__instance.name.StartsWith("GoldenContainer"))
                 {
                     i.SetSize(goldenChestStorageSize.Value);
+                }
+                else if (__instance.name.StartsWith("GoldenContainer"))
+                {
+                    i.SetSize(goldenChestStorageSize.Value);
+                }
+                else if (__instance.name.StartsWith("WaterCollector1"))
+                {
+                    i.SetSize(waterCollectorStorageSize.Value);
                 }
                 else
                     return;
@@ -139,37 +150,53 @@ namespace StorageCustomization
             private static IEnumerator WaitAndFixDisplay(InventoryDisplayer displayer, GridLayoutGroup grid)
             {
                 yield return new WaitForEndOfFrame();
+                Stopwatch s = new Stopwatch();
+                s.Start();
+                RectTransform rtg = grid.GetComponent<RectTransform>();
+                float scale = rtg.lossyScale.x;
                 int childs = grid.transform.childCount;
-                int height = (int)Math.Ceiling(childs / 5f);
-                if (height > 7 && grid.transform.parent.name != "Mask")
-                {
-                    var size = new Vector2(grid.cellSize.x * 5 + grid.spacing.x * 4, grid.cellSize.y * height + grid.spacing.y * (height - 1));
-                    var size2 = new Vector2(grid.cellSize.x * 5 + grid.spacing.x * 4, grid.cellSize.y * 7 + grid.spacing.y * 6) * 4 / 3;
-                    Dbgl($"Adding scroll view: {size}, {size2}");
+                int width = (int)Math.Ceiling(500 / (100 * iconScale.Value));
+                int height = (int)Math.Ceiling(childs / (float)width);
 
-                    RectTransform rtg = grid.GetComponent<RectTransform>();
+                if(iconScale.Value != 1)
+                {
+                    grid.cellSize = new Vector2(100, 100) * iconScale.Value;
+                    foreach(Transform t in grid.transform){
+                        Transform drop = t.Find("Drop");
+                        drop.GetComponent<RectTransform>().localScale = Vector3.one * 1.2f * iconScale.Value;
+                        drop.GetComponent<RectTransform>().pivot = new Vector2(1, 0);
+                    }
+                }
+                var containerSize = new Vector2(grid.cellSize.x * width + grid.spacing.x * (width - 1), 730) * scale;
+                var gridSize = new Vector2(containerSize.x / scale, grid.cellSize.y * height + grid.spacing.y * (height - 1));
+                rtg.anchorMax = new Vector2(0.5f, 0.5f);
+                rtg.anchorMin = new Vector2(0.5f, 0.5f);
+                rtg.sizeDelta = gridSize;
+
+                Dbgl($"Grid: {width}x{height}, grid size {gridSize}, container size {containerSize}, scale {scale}");
+                if (containerSize.y < gridSize.y && grid.transform.parent.name != "Mask")
+                {
+                    Dbgl($"Adding scroll view");
 
                     GameObject scrollObject = new GameObject() { name = "ScrollView" };
                     scrollObject.transform.SetParent(grid.transform.parent);
                     RectTransform rts = scrollObject.AddComponent<RectTransform>();
-                    rts.sizeDelta = size2;
+                    rts.sizeDelta = containerSize;
                     rts.anchorMax = new Vector2(1, 1);
                     rts.anchorMin = new Vector2(0, 0);
-                    rts.anchoredPosition = new Vector2(0, -50);
+                    rts.anchoredPosition = new Vector2(0, -61);
 
                     GameObject mask = new GameObject { name = "Mask" };
                     mask.transform.SetParent(scrollObject.transform);
                     RectTransform rtm = mask.AddComponent<RectTransform>();
                     rtm.anchoredPosition = Vector2.zero;
-                    rtm.sizeDelta = size2;
+                    rtm.sizeDelta = containerSize;
 
-                    //rtg.sizeDelta = size;
-
-                    //Dbgl($"Preferred height: {___grid.preferredHeight}");
                     grid.transform.SetParent(mask.transform);
                     rtg.anchorMax = new Vector2(0.5f, 0.5f);
                     rtg.anchorMin = new Vector2(0.5f, 0.5f);
-                    rtg.sizeDelta = size;
+                    rtg.sizeDelta = gridSize;
+
 
                     Texture2D tex = new Texture2D((int)Mathf.Ceil(rtm.rect.width), (int)Mathf.Ceil(rtm.rect.height));
                     Image image = mask.AddComponent<Image>();
@@ -187,25 +214,22 @@ namespace StorageCustomization
 
                     Dbgl("Added scroll view");
 
-                    displayer.SetIconsPositionRelativeToGrid();
                 }
-                else if (height <= 7 && grid.transform.parent.name == "Mask")
+                else if (containerSize.y >= gridSize.y && grid.transform.parent.name == "Mask")
                 {
-                    RectTransform rtg = grid.GetComponent<RectTransform>();
                     grid.transform.SetParent(grid.transform.parent.parent.parent);
-                    rtg.anchorMax = new Vector2(1f, 1f);
-                    rtg.anchorMin = new Vector2(0f, 0f);
-                    rtg.offsetMax = new Vector2(0,0);
-                    rtg.offsetMin = new Vector2(0,62);
                     Destroy(grid.transform.parent.Find("ScrollView").gameObject);
-                    displayer.SetIconsPositionRelativeToGrid();
+
                 }
+                displayer.SetIconsPositionRelativeToGrid();
 
                 foreach (EventTrigger t in grid.transform.GetComponentsInChildren<EventTrigger>(true))
                 {
                     t.gameObject.AddComponent<MyEventTrigger>().triggers.AddRange(t.triggers);
                     DestroyImmediate(t);
                 }
+                Dbgl($"time: {s.ElapsedMilliseconds}");
+                s.Stop();
                 yield break;
             }
         }
