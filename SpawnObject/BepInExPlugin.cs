@@ -15,7 +15,7 @@ using UnityEngine.UI;
 
 namespace SpawnObject
 {
-    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.2.0")]
+    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.2.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -81,12 +81,14 @@ namespace SpawnObject
                 {
                     objectNames = GroupsHandler.GetAllGroups().Select(g => g.GetId());
                     Dbgl($"Got {objectNames.Count()} objects");
+                    /*
                     List<string> list = new List<string>();
                     foreach(var group in GroupsHandler.GetAllGroups())
                     {
                         list.Add($"{Readable.GetGroupName(group)}: {group.GetId()}");
                     }
                     File.WriteAllLines(Path.Combine(AedenthornUtils.GetAssetPath(context, true), "items.txt"), list);
+                    */
                 }
                 Dbgl("Creating input object");
                 UiWindowTextInput templateWindow = (UiWindowTextInput)Managers.GetManager<WindowsHandler>().GetWindowViaUiId(DataConfig.UiType.TextInput);
@@ -134,7 +136,7 @@ namespace SpawnObject
                             }
                         }
                         if (Managers.GetManager<PopupsHandler>() != null)
-                            AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new PopupData(group.GetImage(), $"Spawned {amount} {group.GetId()}", 2));
+                            AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new PopupData(group.GetImage(), $"Spawned {amount} {Readable.GetGroupName(group)}", 2));
                     }
                     Managers.GetManager<WindowsHandler>().CloseAllWindows();
                     Destroy(inputObject);
