@@ -15,7 +15,7 @@ using Image = UnityEngine.UI.Image;
 
 namespace StorageCustomization
 {
-    [BepInPlugin("aedenthorn.StorageCustomization", "Storage Customization", "0.3.0")]
+    [BepInPlugin("aedenthorn.StorageCustomization", "Storage Customization", "0.3.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -216,10 +216,15 @@ namespace StorageCustomization
                     Dbgl("Added scroll view");
 
                 }
-                else if (containerSize.y >= gridSize.y && grid.transform.parent.name == "Mask")
+                else if (containerSize.y >= gridSize.y)
                 {
-                    grid.transform.SetParent(grid.transform.parent.parent.parent);
-                    Destroy(grid.transform.parent.Find("ScrollView").gameObject);
+                    if (grid.transform.parent.name == "Mask")
+                    {
+                        grid.transform.SetParent(grid.transform.parent.parent.parent);
+                        Destroy(grid.transform.parent.Find("ScrollView").gameObject);
+
+                    }
+                    rtg.anchoredPosition = new Vector2(0, -61);
 
                 }
                 displayer.SetIconsPositionRelativeToGrid();

@@ -12,7 +12,7 @@ using Debug = UnityEngine.Debug;
 
 namespace CraftFromContainers
 {
-    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.1.3")]
+    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.1.5")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -52,7 +52,8 @@ namespace CraftFromContainers
 
         private void Update()
         {
-            if (modEnabled.Value && Managers.GetManager<WindowsHandler>()?.GetHasUiOpen() == false && action.WasPressedThisFrame())
+
+            if (Managers.GetManager<WindowsHandler>()?.GetHasUiOpen() == false && action.WasPressedThisFrame())
             {
                 modEnabled.Value = !modEnabled.Value;
                 Dbgl($"Mod enabled: {modEnabled.Value}");

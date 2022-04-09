@@ -23,6 +23,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpawnObject", "SpawnObject\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomGuageWarnings", "CustomGuageWarnings\CustomGuageWarnings.csproj", "{F5166A8B-C4FF-4063-BB60-DF2F714F7B1E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConstructToInventory", "ConstructToInventory\ConstructToInventory.csproj", "{5A749C5E-5200-48AB-8D5D-FB0DD27A72E1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StorageAnywhere", "StorageAnywhere\StorageAnywhere.csproj", "{0252FAB9-B60F-4775-8BFD-15C4A914531B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +73,14 @@ Global
 		{F5166A8B-C4FF-4063-BB60-DF2F714F7B1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5166A8B-C4FF-4063-BB60-DF2F714F7B1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5166A8B-C4FF-4063-BB60-DF2F714F7B1E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A749C5E-5200-48AB-8D5D-FB0DD27A72E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A749C5E-5200-48AB-8D5D-FB0DD27A72E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A749C5E-5200-48AB-8D5D-FB0DD27A72E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A749C5E-5200-48AB-8D5D-FB0DD27A72E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0252FAB9-B60F-4775-8BFD-15C4A914531B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0252FAB9-B60F-4775-8BFD-15C4A914531B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0252FAB9-B60F-4775-8BFD-15C4A914531B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0252FAB9-B60F-4775-8BFD-15C4A914531B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
