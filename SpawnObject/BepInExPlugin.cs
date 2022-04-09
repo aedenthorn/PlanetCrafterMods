@@ -5,17 +5,17 @@ using HarmonyLib;
 using MijuTools;
 using SpaceCraft;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using Debug = UnityEngine.Debug;
 
 namespace SpawnObject
 {
-    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.1.0")]
+    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -42,7 +42,7 @@ namespace SpawnObject
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
-            toggleKey = Config.Bind<string>("Options", "ToggleKey", "<Keyboard>/end", "Key to toggle pulling");
+            toggleKey = Config.Bind<string>("Options", "ToggleKey", "<Keyboard>/end", "Key to open / close GUI");
             itemText = Config.Bind<string>("Options", "ItemText", "Enter Item...", "Item text placeholder");
             amountText = Config.Bind<string>("Options", "AmountText", "Enter Amount...", "Amount text placeholder");
 
@@ -70,9 +70,9 @@ namespace SpawnObject
                 {
                     if(inputObject != null)
                     {
-                        Managers.GetManager<WindowsHandler>().CloseAllWindows();
                         Destroy(inputObject);
                         inputObject = null;
+                        Managers.GetManager<WindowsHandler>().CloseAllWindows();
                     }
                     return;
                 }
@@ -81,6 +81,12 @@ namespace SpawnObject
                 {
                     objectNames = GroupsHandler.GetAllGroups().Select(g => g.GetId());
                     Dbgl($"Got {objectNames.Count()} objects");
+                    List<string> list = new List<string>();
+                    foreach(var group in GroupsHandler.GetAllGroups())
+                    {
+                        list.Add($"{Readable.GetGroupName(group)}: {group.GetId()}");
+                    }
+                    File.WriteAllLines(Path.Combine(AedenthornUtils.GetAssetPath(context, true), "items.txt"), list);
                 }
                 Dbgl("Creating input object");
                 UiWindowTextInput templateWindow = (UiWindowTextInput)Managers.GetManager<WindowsHandler>().GetWindowViaUiId(DataConfig.UiType.TextInput);
@@ -117,7 +123,14 @@ namespace SpawnObject
                         {
                             while (i++ < int.Parse(amount))
                             {
-                                WorldObjectsHandler.CreateAndDropOnFloor(group, Managers.GetManager<PlayersManager>().GetActivePlayerController().GetAimController().GetAimRay().GetPoint(0.7f));
+                                if (Keyboard.current.leftShiftKey.isPressed && !Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory().IsFull())
+                                {
+                                    Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory().AddItem(WorldObjectsHandler.CreateNewWorldObject(group));
+                                }
+                                else
+                                {
+                                    WorldObjectsHandler.CreateAndDropOnFloor(group, Managers.GetManager<PlayersManager>().GetActivePlayerController().GetAimController().GetAimRay().GetPoint(0.7f));
+                                }
                             }
                         }
                         if (Managers.GetManager<PopupsHandler>() != null)
@@ -167,11 +180,17 @@ namespace SpawnObject
                         GameObject go = new GameObject($"Suggestion {i+1}");
                         go.transform.SetParent(suggestionBox.transform, false);
                         go.AddComponent<RectTransform>().anchoredPosition = new Vector2(0, i * -inputField.GetComponent<RectTransform>().rect.height * inputField.GetComponent<RectTransform>().localScale.x / 2);
-                        go.GetComponent<RectTransform>().sizeDelta = windowViaUiId.inputField.GetComponent<RectTransform>().rect.size * inputField.GetComponent<RectTransform>().localScale.x;
+                        go.GetComponent<RectTransform>().sizeDelta = windowViaUiId.inputField.GetComponent<RectTransform>().rect.size * 0.9f * inputField.GetComponent<RectTransform>().localScale.x;
                         var tmp = go.AddComponent<TextMeshProUGUI>();
+                        tmp.color = Color.black;
                         tmp.text = possibles.ElementAt(i);
+
+                        GameObject child = Instantiate(go, go.transform.parent);
+                        child.GetComponent<TextMeshProUGUI>().color = Color.white;
+                        child.GetComponent<RectTransform>().anchoredPosition += new Vector2(1, -1);
+
                         //tmp.fontSize = 24;
-                        var b = go.AddComponent<Button>();
+                        var b = child.AddComponent<Button>();
                         b.onClick.AddListener(delegate ()
                         {
                             windowViaUiId.inputField.text = tmp.text;
