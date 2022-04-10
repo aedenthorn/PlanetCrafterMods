@@ -12,7 +12,7 @@ using Debug = UnityEngine.Debug;
 
 namespace CraftFromContainers
 {
-    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.1.5")]
+    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -67,14 +67,16 @@ namespace CraftFromContainers
         {
             static void Prefix(Inventory __instance, List<Group> _groups, bool _destroyWorldObjects, bool _displayInformation)
             {
-                if (!modEnabled.Value || __instance != Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory())
+                if (!modEnabled.Value || skip || __instance != Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory())
                     return;
+                List<Group> groupsCopy = new List<Group>();
+                groupsCopy.AddRange(_groups);
 
                 skip = true;
                 List<bool> hasStatus = __instance.ItemsContainsStatus(_groups);
+                skip = false;
                 if (!hasStatus.Contains(false))
                     return;
-                skip = false;
 
                 Dbgl($"Trying to remove missing items from player inventory:");
                 for (int j = 0; j < hasStatus.Count; j++)
@@ -104,20 +106,34 @@ namespace CraftFromContainers
                         continue;
                     Dbgl($"checking close inventory {ial[i].name}: {ial[i].transform.position}, {pos}: {dist}m");
                     skip = true;
-                    List<bool> hasItems = ial[i].GetInventory().ItemsContainsStatus(_groups);
+                    List<bool> hasItems = ial[i].GetInventory().ItemsContainsStatus(groupsCopy);
                     skip = false;
                     List<Group> thisGroups = new List<Group>();
                     for (int j = 0; j < hasStatus.Count; j++)
                     {
-                        if (!hasStatus[j] && hasItems[j])
+                        if (!hasStatus[j] && groupsCopy.Contains(_groups[j]) && hasItems[groupsCopy.IndexOf(_groups[j])])
                         {
-                            Dbgl($"Removing item {_groups[j].GetId()} from {ial[i].name}");
+                            Dbgl($"\tFound item {_groups[j].GetId()} in {ial[i].name}");
                             hasStatus[j] = true;
                             thisGroups.Add(_groups[j]);
-                            _groups.RemoveAt(j);
+                            hasItems.RemoveAt(groupsCopy.IndexOf(_groups[j]));
+                            groupsCopy.Remove(_groups[j]);
                         }
                     }
-                    ial[i].GetInventory().RemoveItems(thisGroups, _destroyWorldObjects, _displayInformation);
+                    foreach (Group group in thisGroups)
+                    {
+                        for (int j = ial[i].GetInventory().GetInsideWorldObjects().Count - 1; j > -1; j--)
+                        {
+                            Dbgl($"\thas {ial[i].GetInventory().GetInsideWorldObjects()[j].GetGroup().GetId()}");
+
+                            if (ial[i].GetInventory().GetInsideWorldObjects()[j].GetGroup() == group)
+                            {
+                                ial[i].GetInventory().RemoveItem(ial[i].GetInventory().GetInsideWorldObjects()[j], false);
+                                Dbgl($"\tremoved {group.GetId()}");
+                                break;
+                            }
+                        }
+                    }
                     if (!hasStatus.Contains(false))
                     {
                         Dbgl($"removed all missing items");
@@ -134,13 +150,15 @@ namespace CraftFromContainers
             {
                 if (!modEnabled.Value || skip || __instance != Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() || !__result.Contains(false))
                     return;
-                Dbgl($"checking status for missing items:");
+                List<Group> groupsCopy = new List<Group>();
+                groupsCopy.AddRange(_groups);
+                //Dbgl($"checking status for missing items:");
 
                 for (int j = 0; j < __result.Count; j++)
                 {
                     if (!__result[j])
                     {
-                        Dbgl($"{_groups[j].GetId()}");
+                        //Dbgl($"{groupsCopy[j].GetId()}");
                     }
                 }
 
@@ -148,28 +166,30 @@ namespace CraftFromContainers
                 InventoryAssociated[] ial = FindObjectsOfType<InventoryAssociated>();
                 Vector2 pos = Managers.GetManager<PlayersManager>().GetActivePlayerController().transform.position;
 
-                Dbgl($"got {ial.Length} inventories");
+                //Dbgl($"got {ial.Length} inventories");
 
                 for (int i = 0; i < ial.Length; i++)
                 {
                     var dist = Vector2.Distance(ial[i].transform.position, pos);
                     if (ial[i].GetInventory() == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() || dist > range.Value)
                         continue;
-                    Dbgl($"checking close inventory {ial[i].name}: {ial[i].transform.position}, {pos}: {dist}m");
+                    //Dbgl($"checking close inventory {ial[i].name}: {ial[i].transform.position}, {pos}: {dist}m");
                     skip = true;
-                    List<bool> hasItems = ial[i].GetInventory().ItemsContainsStatus(_groups);
+                    List<bool> hasItems = ial[i].GetInventory().ItemsContainsStatus(groupsCopy);
                     skip = false;
                     for (int j = 0; j < __result.Count; j++)
                     {
-                        if (!__result[j] && hasItems[j])
+                        if (!__result[j] && groupsCopy.Contains(_groups[j]) && hasItems[groupsCopy.IndexOf(_groups[j])])
                         {
-                            Dbgl($"Found item {_groups[j].GetId()} in {ial[i].name}");
+                            //Dbgl($"Found item {_groups[j].GetId()} in {ial[i].name}");
                             __result[j] = true;
+                            hasItems.RemoveAt(groupsCopy.IndexOf(_groups[j]));
+                            groupsCopy.Remove(_groups[j]);
                         }
                     }
                     if (!__result.Contains(false))
                     {
-                        Dbgl($"found all items");
+                        //Dbgl($"found all items");
                         return;
                     }
 
