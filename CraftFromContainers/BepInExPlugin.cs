@@ -12,7 +12,7 @@ using Debug = UnityEngine.Debug;
 
 namespace CraftFromContainers
 {
-    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.2.0")]
+    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.2.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -20,6 +20,7 @@ namespace CraftFromContainers
         private static ConfigEntry<bool> modEnabled;
         private static ConfigEntry<bool> isDebug;
         private static ConfigEntry<string> toggleKey;
+        private static ConfigEntry<string> missingResources;
         private static ConfigEntry<float> range;
 
         private InputAction action;
@@ -37,6 +38,7 @@ namespace CraftFromContainers
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
             toggleKey = Config.Bind<string>("Options", "ToggleKey", "<Keyboard>/home", "Key to toggle pulling");
+            missingResources = Config.Bind<string>("Options", "MissingResources", "Missing Resources!", "Message to display if you move out of resource range while building.");
             range = Config.Bind<float>("Options", "Range", 20f, "Pull range (m)");
 
             if (!toggleKey.Value.Contains("<"))
@@ -62,6 +64,25 @@ namespace CraftFromContainers
             }
         }
 
+        [HarmonyPatch(typeof(PlayerBuilder), nameof(PlayerBuilder.InputOnAction))]
+        private static class PlayerBuilder_InputOnAction_Patch
+        {
+            static bool Prefix(PlayerBuilder __instance, ref ConstructibleGhost ___ghost, float ___timeCreatedGhost, float ___timeCantBuildInterval, GroupConstructible ___ghostGroupConstructible)
+            {
+                if (!modEnabled.Value || ___ghost is null || (Time.time < ___timeCreatedGhost + ___timeCantBuildInterval && !Managers.GetManager<PlayModeHandler>().GetIsFreePlay()))
+                    return true;
+                if(!__instance.GetComponent<PlayerBackpack>().GetInventory().ContainsItems(new List<Group>{ ___ghostGroupConstructible }) && !__instance.GetComponent<PlayerBackpack>().GetInventory().ContainsItems(___ghostGroupConstructible.GetRecipe().GetIngredientsGroupInRecipe()))
+                {
+                    Dbgl("Resources missing! Cancelling build.");
+                    Destroy(___ghost.gameObject);
+                    ___ghost = null;
+                    if (Managers.GetManager<PopupsHandler>() != null)
+                        AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new PopupData(___ghostGroupConstructible.GetImage(), missingResources.Value, 2));
+                    return false;
+                }
+                return true;
+            }
+        }
         [HarmonyPatch(typeof(Inventory), nameof(Inventory.RemoveItems))]
         private static class Inventory_RemoveItems_Patch
         {
@@ -102,7 +123,7 @@ namespace CraftFromContainers
                         continue;
                     }
                     var dist = Vector2.Distance(ial[i].transform.position, pos);
-                    if (ial[i].GetInventory() == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() || dist > range.Value)
+                    if (ial[i].name.Contains("Golden Container") || ial[i].GetInventory() == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() || dist > range.Value)
                         continue;
                     Dbgl($"checking close inventory {ial[i].name}: {ial[i].transform.position}, {pos}: {dist}m");
                     skip = true;
@@ -171,7 +192,7 @@ namespace CraftFromContainers
                 for (int i = 0; i < ial.Length; i++)
                 {
                     var dist = Vector2.Distance(ial[i].transform.position, pos);
-                    if (ial[i].GetInventory() == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() || dist > range.Value)
+                    if (ial[i].name.Contains("Golden Container") || ial[i].GetInventory() == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() || dist > range.Value)
                         continue;
                     //Dbgl($"checking close inventory {ial[i].name}: {ial[i].transform.position}, {pos}: {dist}m");
                     skip = true;

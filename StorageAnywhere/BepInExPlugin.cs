@@ -163,9 +163,10 @@ namespace StorageAnywhere
                     continue;
                 }
                 var dist = Vector2.Distance(ial[i].transform.position, pos);
-                if (ial[i].GetInventory() != Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() && dist <= range.Value && (!ignoreSingleCell.Value || ial[i].GetInventory().GetSize() > 1))
+                if (ial[i].GetInventory() != Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() && dist <= range.Value && (!ignoreSingleCell.Value || ial[i].GetInventory().GetSize() > 1) && !ial[i].name.Contains("Golden Container"))
                     result.Add(ial[i]);
             }
+            result.Sort(delegate (InventoryAssociated a, InventoryAssociated b) { return a.name.CompareTo(b.name); });
             return result;
         }
 
