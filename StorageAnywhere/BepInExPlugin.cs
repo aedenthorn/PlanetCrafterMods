@@ -19,7 +19,7 @@ using Image = UnityEngine.UI.Image;
 
 namespace StorageAnywhere
 {
-    [BepInPlugin("aedenthorn.StorageAnywhere", "Storage Anywhere", "0.1.0")]
+    [BepInPlugin("aedenthorn.StorageAnywhere", "Storage Anywhere", "0.1.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -74,10 +74,12 @@ namespace StorageAnywhere
                 return;
             if (action.WasPressedThisFrame())
             {
-                if (Managers.GetManager<WindowsHandler>().GetHasUiOpen() && Managers.GetManager<WindowsHandler>().GetOpenedUi() == DataConfig.UiType.Container)
+                if (Managers.GetManager<WindowsHandler>().GetHasUiOpen())
                 {
-                    Managers.GetManager<WindowsHandler>().CloseAllWindows();
-
+                    if(Managers.GetManager<WindowsHandler>().GetOpenedUi() == DataConfig.UiType.Container)
+                    {
+                        Managers.GetManager<WindowsHandler>().CloseAllWindows();
+                    }
                     return;
                 }
                 currentIndex = 0;

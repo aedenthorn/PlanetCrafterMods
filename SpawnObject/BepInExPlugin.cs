@@ -15,7 +15,7 @@ using UnityEngine.UI;
 
 namespace SpawnObject
 {
-    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.2.1")]
+    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.2.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -30,7 +30,7 @@ namespace SpawnObject
 
         private static GameObject inputObject;
         private static GameObject suggestionBox;
-        private static GameObject numberField;
+        private static GameObject numberFieldObject;
         private static IEnumerable<string> objectNames;
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
@@ -115,7 +115,7 @@ namespace SpawnObject
                 inputObject.GetComponentInChildren<Button>().onClick = new Button.ButtonClickedEvent();
                 inputObject.GetComponentInChildren<Button>().onClick.AddListener(delegate () {
                     var text = inputField.text;
-                    var amount = numberField.GetComponent<TMP_InputField>().text;
+                    var amount = numberFieldObject.GetComponent<TMP_InputField>().text;
                     if (text.Length > 0 &&  amount.Length > 0 &&  objectNames.Contains(text))
                     {
                         Dbgl($"Spawning {amount} {text}");
@@ -146,11 +146,11 @@ namespace SpawnObject
 
                 Destroy(inputField.transform.parent.GetComponent<RectMask2D>());
 
-                numberField = Instantiate(inputField.gameObject, inputField.transform.parent);
-                numberField.name = "Amount";
-                numberField.GetComponent<RectTransform>().anchoredPosition = inputField.GetComponent<RectTransform>().anchoredPosition - new Vector2(0, inputField.GetComponent<RectTransform>().rect.height * inputField.GetComponent<RectTransform>().localScale.x);
+                numberFieldObject = Instantiate(inputField.gameObject, inputField.transform.parent);
+                numberFieldObject.name = "Amount";
+                numberFieldObject.GetComponent<RectTransform>().anchoredPosition = inputField.GetComponent<RectTransform>().anchoredPosition - new Vector2(0, inputField.GetComponent<RectTransform>().rect.height * inputField.GetComponent<RectTransform>().localScale.x);
 
-                foreach(var tmp in numberField.GetComponentsInChildren<TextMeshProUGUI>())
+                foreach(var tmp in numberFieldObject.GetComponentsInChildren<TextMeshProUGUI>())
                 {
                     if(tmp.text.Length > 0)
                     {
@@ -158,14 +158,16 @@ namespace SpawnObject
                     }
                 }
 
-                numberField.GetComponent<TMP_InputField>().contentType = TMP_InputField.ContentType.IntegerNumber;
-                numberField.GetComponent<TMP_InputField>().onValueChanged = new TMP_InputField.OnChangeEvent();
+                numberFieldObject.GetComponent<TMP_InputField>().text = "";
+                numberFieldObject.GetComponent<TMP_InputField>().contentType = TMP_InputField.ContentType.IntegerNumber;
+                numberFieldObject.GetComponent<TMP_InputField>().onValueChanged = new TMP_InputField.OnChangeEvent();
 
                 suggestionBox = new GameObject("Suggestion Box");
                 suggestionBox.transform.SetParent(inputField.transform.parent, false);
                 suggestionBox.AddComponent<RectTransform>().anchoredPosition = inputField.GetComponent<RectTransform>().anchoredPosition - new Vector2(0, inputField.GetComponent<RectTransform>().rect.height * inputField.GetComponent<RectTransform>().localScale.x * 2);
                 suggestionBox.GetComponent<RectTransform>().sizeDelta = new Vector2(inputField.GetComponent<RectTransform>().rect.size.x * 0.9f * inputField.GetComponent<RectTransform>().localScale.x, 1000);
                 windowViaUiId.SetTextWorldObject(new WorldObjectText());
+                inputField.text = "";
                 inputField.onValueChanged = new TMP_InputField.OnChangeEvent();
                 inputField.onValueChanged.AddListener(delegate (string value)
                 {

@@ -84,7 +84,7 @@ namespace QuickStore
 
                 for(int j = objects.Count - 1; j >= 0; j--)
                 {
-                    if (ial[i].GetInventory().GetInsideWorldObjects().Exists(o => o.GetGroup() == objects[j].GetGroup()))
+                    if (!ial[i].GetInventory().IsFull() && ial[i].GetInventory().GetInsideWorldObjects().Exists(o => o.GetGroup() == objects[j].GetGroup()))
                     {
                         Dbgl($"Storing {objects[j].GetGroup()} in {ial[i].name}");
                         ial[i].GetInventory().AddItem(objects[j]);

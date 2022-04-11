@@ -12,7 +12,7 @@ using Debug = UnityEngine.Debug;
 
 namespace CraftFromContainers
 {
-    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.2.1")]
+    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.2.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -191,6 +191,14 @@ namespace CraftFromContainers
 
                 for (int i = 0; i < ial.Length; i++)
                 {
+                    try
+                    {
+                        ial[i].GetInventory();
+                    }
+                    catch
+                    {
+                        continue;
+                    }
                     var dist = Vector2.Distance(ial[i].transform.position, pos);
                     if (ial[i].name.Contains("Golden Container") || ial[i].GetInventory() == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() || dist > range.Value)
                         continue;
