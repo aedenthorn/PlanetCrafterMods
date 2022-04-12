@@ -27,6 +27,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConstructToInventory", "Con
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StorageAnywhere", "StorageAnywhere\StorageAnywhere.csproj", "{0252FAB9-B60F-4775-8BFD-15C4A914531B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuickRotate", "QuickRotate\QuickRotate.csproj", "{F70AC2B2-5417-4A3C-B201-F0DF11854611}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,6 +83,10 @@ Global
 		{0252FAB9-B60F-4775-8BFD-15C4A914531B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0252FAB9-B60F-4775-8BFD-15C4A914531B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0252FAB9-B60F-4775-8BFD-15C4A914531B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F70AC2B2-5417-4A3C-B201-F0DF11854611}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F70AC2B2-5417-4A3C-B201-F0DF11854611}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F70AC2B2-5417-4A3C-B201-F0DF11854611}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F70AC2B2-5417-4A3C-B201-F0DF11854611}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -15,7 +15,7 @@ using Image = UnityEngine.UI.Image;
 
 namespace StorageCustomization
 {
-    [BepInPlugin("aedenthorn.StorageCustomization", "Storage Customization", "0.3.1")]
+    [BepInPlugin("aedenthorn.StorageCustomization", "Storage Customization", "0.3.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -70,29 +70,29 @@ namespace StorageCustomization
                 GroupItem groupItem = (GroupItem)_worldObject.GetGroup();
                 if (groupItem.GetEquipableType() == DataConfig.EquipableType.BackpackIncrease && !_isFirstInit)
                 {
+                    switch (_worldObject.GetGroup().GetAssociatedGameObject().name)
+                    {
+                        case "Backpack1":
+                            ((GroupItem)AccessTools.FieldRefAccess<WorldObject, Group>(_worldObject, "group")).value = backpack1Adds.Value;
+                            break;
+                        case "Backpack2":
+                            ((GroupItem)AccessTools.FieldRefAccess<WorldObject, Group>(_worldObject, "group")).value = backpack2Adds.Value;
+                            break;
+                        case "Backpack3":
+                            ((GroupItem)AccessTools.FieldRefAccess<WorldObject, Group>(_worldObject, "group")).value = backpack3Adds.Value;
+                            break;
+                        case "Backpack4":
+                            ((GroupItem)AccessTools.FieldRefAccess<WorldObject, Group>(_worldObject, "group")).value = backpack4Adds.Value;
+                            break;
+                        case "Backpack5":
+                            ((GroupItem)AccessTools.FieldRefAccess<WorldObject, Group>(_worldObject, "group")).value = backpack5Adds.Value;
+                            break;
+                    }
                     if (_hasBeenAdded)
                     {
-                        switch (_worldObject.GetGroup().GetAssociatedGameObject().name)
-                        {
-                            case "Backpack1":
-                                ((GroupItem)AccessTools.FieldRefAccess<WorldObject, Group>(_worldObject, "group")).value = backpack1Adds.Value;
-                                break;
-                            case "Backpack2":
-                                ((GroupItem)AccessTools.FieldRefAccess<WorldObject, Group>(_worldObject, "group")).value = backpack2Adds.Value;
-                                break;
-                            case "Backpack3":
-                                ((GroupItem)AccessTools.FieldRefAccess<WorldObject, Group>(_worldObject, "group")).value = backpack3Adds.Value;
-                                break;
-                            case "Backpack4":
-                                ((GroupItem)AccessTools.FieldRefAccess<WorldObject, Group>(_worldObject, "group")).value = backpack4Adds.Value;
-                                break;
-                            case "Backpack5":
-                                ((GroupItem)AccessTools.FieldRefAccess<WorldObject, Group>(_worldObject, "group")).value = backpack5Adds.Value;
-                                break;
-                        }
                         Dbgl($"Added {_worldObject.GetGroup().GetAssociatedGameObject().name}, value {((GroupItem)AccessTools.FieldRefAccess<WorldObject, Group>(_worldObject, "group")).value}");
                     }
-                    if (!_hasBeenAdded)
+                    else
                     {
                         Dbgl($"removed {_worldObject.GetGroup().GetAssociatedGameObject().name}, value {((GroupItem)AccessTools.FieldRefAccess<WorldObject, Group>(_worldObject, "group")).value}");
                     }

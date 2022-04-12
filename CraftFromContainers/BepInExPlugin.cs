@@ -74,10 +74,10 @@ namespace CraftFromContainers
                 if(!__instance.GetComponent<PlayerBackpack>().GetInventory().ContainsItems(new List<Group>{ ___ghostGroupConstructible }) && !__instance.GetComponent<PlayerBackpack>().GetInventory().ContainsItems(___ghostGroupConstructible.GetRecipe().GetIngredientsGroupInRecipe()))
                 {
                     Dbgl("Resources missing! Cancelling build.");
-                    Destroy(___ghost.gameObject);
-                    ___ghost = null;
                     if (Managers.GetManager<PopupsHandler>() != null)
                         AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new PopupData(___ghostGroupConstructible.GetImage(), missingResources.Value, 2));
+                    Destroy(___ghost.gameObject);
+                    ___ghost = null;
                     return false;
                 }
                 return true;

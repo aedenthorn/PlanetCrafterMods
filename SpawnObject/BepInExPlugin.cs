@@ -15,7 +15,7 @@ using UnityEngine.UI;
 
 namespace SpawnObject
 {
-    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.2.2")]
+    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.3.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -27,7 +27,7 @@ namespace SpawnObject
         private static ConfigEntry<string> amountText;
 
         private InputAction action;
-
+        private Texture2D hexTexture;
         private static GameObject inputObject;
         private static GameObject suggestionBox;
         private static GameObject numberFieldObject;
@@ -48,6 +48,35 @@ namespace SpawnObject
 
             if (!toggleKey.Value.Contains("<"))
                 toggleKey.Value = "<Keyboard>/" + toggleKey.Value;
+
+            hexTexture = new Texture2D(46, 46);
+            Color[] colors = new Color[46 * 46];
+            for(int y = 0; y < 46; y++)
+            {
+                for (int x = 0; x < 46; x++)
+                {
+                    if(y < 23)
+                    {
+                        if (x == 21 + y || x == 20 + y || x == 19 + y || x == 18 + y)
+                            colors[y * 46 + x] = Color.white;
+                        else if (x == 23 + y || x == 22 + y || x == 17 + y || x == 16 + y)
+                            colors[y * 46 + x] = Color.white * 0.5f;
+                        else
+                            colors[y * 46 + x] = Color.clear;
+                    }
+                    else
+                    {
+                        if (x == 43 - y + 23 || x == 42 - y + 23 || x == 41 - y + 23 || x == 40 - y + 23)
+                            colors[y * 46 + x] = Color.white;
+                        else if (x == 45 - y + 23 || x == 44 - y + 23  || x == 39 - y + 23 || x == 38 - y + 23)
+                            colors[y * 46 + x] = Color.white * 0.5f;
+                        else
+                            colors[y * 46 + x] = Color.clear;
+                    }
+                }
+            }
+            hexTexture.SetPixels(colors);
+            hexTexture.Apply();
 
             action = new InputAction(binding: toggleKey.Value);
             action.Enable();
@@ -96,11 +125,16 @@ namespace SpawnObject
                 inputObject.name = "Spawn Item Window";
                 inputObject.transform.GetChild(0).GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 300);
                 Destroy(inputObject.GetComponentInChildren<TextMeshProUGUI>().gameObject);
-                foreach(Transform t in inputObject.GetComponentInChildren<Button>().transform)
+                Button goButton = inputObject.GetComponentInChildren<Button>();
+                foreach (Transform t in goButton.transform)
                 {
-                    t.gameObject.SetActive(false);
+                    if(t.GetComponent<Image>() != null)
+                    {
+                        t.GetComponent<Image>().sprite = Sprite.Create(hexTexture, new Rect(0, 0, 46, 46), Vector2.zero);
+                    }
                 }
-
+                goButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(270, 367);
+                
                 UiWindowTextInput windowViaUiId = inputObject.GetComponent<UiWindowTextInput>();
                 var inputField = windowViaUiId.inputField;
 
@@ -112,8 +146,8 @@ namespace SpawnObject
                     }
                 }
 
-                inputObject.GetComponentInChildren<Button>().onClick = new Button.ButtonClickedEvent();
-                inputObject.GetComponentInChildren<Button>().onClick.AddListener(delegate () {
+                goButton.onClick = new Button.ButtonClickedEvent();
+                goButton.onClick.AddListener(delegate () {
                     var text = inputField.text;
                     var amount = numberFieldObject.GetComponent<TMP_InputField>().text;
                     if (text.Length > 0 &&  amount.Length > 0 &&  objectNames.Contains(text))
@@ -158,17 +192,17 @@ namespace SpawnObject
                     }
                 }
 
+                numberFieldObject.GetComponent<TMP_InputField>().onValueChanged = new TMP_InputField.OnChangeEvent();
                 numberFieldObject.GetComponent<TMP_InputField>().text = "";
                 numberFieldObject.GetComponent<TMP_InputField>().contentType = TMP_InputField.ContentType.IntegerNumber;
-                numberFieldObject.GetComponent<TMP_InputField>().onValueChanged = new TMP_InputField.OnChangeEvent();
 
                 suggestionBox = new GameObject("Suggestion Box");
                 suggestionBox.transform.SetParent(inputField.transform.parent, false);
                 suggestionBox.AddComponent<RectTransform>().anchoredPosition = inputField.GetComponent<RectTransform>().anchoredPosition - new Vector2(0, inputField.GetComponent<RectTransform>().rect.height * inputField.GetComponent<RectTransform>().localScale.x * 2);
                 suggestionBox.GetComponent<RectTransform>().sizeDelta = new Vector2(inputField.GetComponent<RectTransform>().rect.size.x * 0.9f * inputField.GetComponent<RectTransform>().localScale.x, 1000);
                 windowViaUiId.SetTextWorldObject(new WorldObjectText());
-                inputField.text = "";
                 inputField.onValueChanged = new TMP_InputField.OnChangeEvent();
+                inputField.text = "";
                 inputField.onValueChanged.AddListener(delegate (string value)
                 {
                     foreach (Transform child in suggestionBox.transform)

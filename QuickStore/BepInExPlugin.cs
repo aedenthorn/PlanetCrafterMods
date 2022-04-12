@@ -1,18 +1,16 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-using HarmonyLib;
 using MijuTools;
 using SpaceCraft;
 using System.Collections.Generic;
-using System.Reflection;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Debug = UnityEngine.Debug;
 
 namespace QuickStore
 {
-    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.1.3")]
+    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -20,6 +18,8 @@ namespace QuickStore
         private static ConfigEntry<bool> modEnabled;
         private static ConfigEntry<bool> isDebug;
         private static ConfigEntry<string> storeKey;
+        private static ConfigEntry<string> allowList;
+        private static ConfigEntry<string> disallowList;
         private static ConfigEntry<float> range;
 
         private InputAction action;
@@ -37,6 +37,8 @@ namespace QuickStore
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
             storeKey = Config.Bind<string>("Options", "StoreKey", "<Keyboard>/l", "Key to store items");
+            allowList = Config.Bind<string>("Options", "AllowList", "", "Comma-separated list of item IDs to allow storing (overrides DisallowList).");
+            disallowList = Config.Bind<string>("Options", "DisallowList", "", "Comma-separated list of item IDs to disallow storing (if AllowList is empty)");
             range = Config.Bind<float>("Options", "Range", 20f, "Store range (m)");
 
             if (!storeKey.Value.Contains("<"))
@@ -59,14 +61,16 @@ namespace QuickStore
         }
         private void StoreItems()
         {
+            List<string> allow = allowList.Value.Split(',').ToList();
+            List<string> disallow = disallowList.Value.Split(',').ToList();
             InventoryAssociated[] ial = FindObjectsOfType<InventoryAssociated>();
             Vector2 pos = Managers.GetManager<PlayersManager>().GetActivePlayerController().transform.position;
 
             Dbgl($"got {ial.Length} inventories");
 
-            var objects = Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory().GetInsideWorldObjects();
-            InformationsDisplayer informationsDisplayer = Managers.GetManager<DisplayersHandler>().GetInformationsDisplayer();
+            List<WorldObject> objects = Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory().GetInsideWorldObjects();
 
+            InformationsDisplayer informationsDisplayer = Managers.GetManager<DisplayersHandler>().GetInformationsDisplayer();
             for (int i = 0; i < ial.Length; i++)
             {
                 var dist = Vector2.Distance(ial[i].transform.position, pos);
@@ -82,8 +86,18 @@ namespace QuickStore
                     continue;
                 Dbgl($"checking close inventory {ial[i].name}: {ial[i].transform.position}, {pos}: {dist}m");
 
-                for(int j = objects.Count - 1; j >= 0; j--)
+                for (int j = objects.Count - 1; j >= 0; j--)
                 {
+                    if (allowList.Value.Length > 0)
+                    {
+                        if (!allow.Contains(objects[j].GetGroup().GetId()))
+                            continue;
+                    }
+                    else if (disallowList.Value.Length > 0)
+                    {
+                        if (disallow.Contains(objects[j].GetGroup().GetId()))
+                            continue;
+                    }
                     if (!ial[i].GetInventory().IsFull() && ial[i].GetInventory().GetInsideWorldObjects().Exists(o => o.GetGroup() == objects[j].GetGroup()))
                     {
                         Dbgl($"Storing {objects[j].GetGroup()} in {ial[i].name}");
