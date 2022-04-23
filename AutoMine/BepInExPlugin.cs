@@ -5,13 +5,9 @@ using HarmonyLib;
 using MijuTools;
 using SpaceCraft;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
-using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
 namespace AutoMine
 {
@@ -116,14 +112,5 @@ namespace AutoMine
             Dbgl($"Mined {count} items");
         }
 
-        //[HarmonyPatch(typeof(PlayerEquipment), "UpdateAfterEquipmentChange")]
-        static class PlayerEquipment_UpdateAfterEquipmentChange_Patch
-        {
-            static void Prefix(PlayerEquipment __instance, WorldObject _worldObject, bool _hasBeenAdded, bool _isFirstInit)
-            {
-                if (!modEnabled.Value)
-                    return;
-            }
-        }
     }
 }
