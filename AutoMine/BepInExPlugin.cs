@@ -102,13 +102,16 @@ namespace AutoMine
             int count = 0;
             foreach (var m in FindObjectsOfType<ActionMinable>())
             {
-                if (player.GetPlayerBackpack().GetInventory().IsFull())
-                    return;
                 Vector2 pos = player.transform.position;
                 var dist = Vector2.Distance(m.transform.position, pos);
                 if (dist > maxRange.Value)
                     continue;
-                WorldObject worldObject = m.GetComponent<WorldObjectAssociated>().GetWorldObject();
+
+                var worldObjectAssociated = m.GetComponent<WorldObjectAssociated>();
+                if (worldObjectAssociated == null)
+                    continue;
+
+                WorldObject worldObject = worldObjectAssociated.GetWorldObject();
 
                 if (allowList.Value.Length > 0)
                 {
@@ -121,12 +124,18 @@ namespace AutoMine
                         continue;
                 }
 
-                Destroy(m.gameObject);
-                player.GetPlayerBackpack().GetInventory().AddItem(worldObject);
-                informationsDisplayer.AddInformation(2f, Readable.GetGroupName(worldObject.GetGroup()), DataConfig.UiInformationsType.InInventory, worldObject.GetGroup().GetImage());
-                worldObject.SetDontSaveMe(false);
-                Managers.GetManager<DisplayersHandler>().GetItemWorldDislpayer().Hide();
-                count++;
+                if (player.GetPlayerBackpack().GetInventory().AddItem(worldObject))
+                {
+                    Destroy(m.gameObject);
+                    informationsDisplayer.AddInformation(2f, Readable.GetGroupName(worldObject.GetGroup()), DataConfig.UiInformationsType.InInventory, worldObject.GetGroup().GetImage());
+                    worldObject.SetDontSaveMe(false);
+                    Managers.GetManager<DisplayersHandler>().GetItemWorldDislpayer().Hide();
+                    count++;
+                } 
+                else
+                {
+                    break;
+                }
             }
             if(count > 0)
             {
