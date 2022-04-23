@@ -5,13 +5,14 @@ using HarmonyLib;
 using MijuTools;
 using SpaceCraft;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace AutoMine
 {
-    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.1.0")]
+    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -23,6 +24,9 @@ namespace AutoMine
         private static ConfigEntry<string> checkKey;
         private static ConfigEntry<float> checkInterval;
         private static ConfigEntry<float> maxRange;
+        private static ConfigEntry<string> allowList;
+        private static ConfigEntry<string> disallowList;
+
         private static float elapsed;
 
         private InputAction action;
@@ -39,9 +43,11 @@ namespace AutoMine
             isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
             intervalCheck = Config.Bind<bool>("Options", "IntervalCheck", true, "Enable interval checking");
             checkInterval = Config.Bind<float>("Options", "CheckInterval", 3f, "Seconds betweeen check");
-            maxRange = Config.Bind<float>("Options", "MaxRange", 20f, "Range to check in meters");
+            maxRange = Config.Bind<float>("Options", "MaxRange", 10f, "Range to check in meters");
             checkToggleKey = Config.Bind<string>("Options", "IntervalCheckKey", "<Keyboard>/v", "Key to enable / disable interval checking");
             checkKey = Config.Bind<string>("Options", "CheckKey", "<Keyboard>/c", "Key to check manually");
+            allowList = Config.Bind<string>("Options", "AllowList", "", "Comma-separated list of item IDs to allow mining (overrides DisallowList).");
+            disallowList = Config.Bind<string>("Options", "DisallowList", "", "Comma-separated list of item IDs to disallow mining (if AllowList is empty)");
 
             action = new InputAction(binding: checkToggleKey.Value);
             action.Enable();
@@ -86,20 +92,37 @@ namespace AutoMine
 
         private void CheckForNearbyMinables()
         {
-            if (!Managers.GetManager<PlayersManager>())
+            if (!Managers.GetManager<PlayersManager>() || Managers.GetManager<WindowsHandler>().GetHasUiOpen())
                 return;
+
+            List<string> allow = allowList.Value.Split(',').ToList();
+            List<string> disallow = disallowList.Value.Split(',').ToList();
             var player = Managers.GetManager<PlayersManager>().GetActivePlayerController();
             InformationsDisplayer informationsDisplayer = Managers.GetManager<DisplayersHandler>().GetInformationsDisplayer();
             int count = 0;
             foreach (var m in FindObjectsOfType<ActionMinable>())
             {
+                if (player.GetPlayerBackpack().GetInventory().IsFull())
+                    return;
                 Vector2 pos = player.transform.position;
                 var dist = Vector2.Distance(m.transform.position, pos);
                 if (dist > maxRange.Value)
                     continue;
                 WorldObject worldObject = m.GetComponent<WorldObjectAssociated>().GetWorldObject();
+
+                if (allowList.Value.Length > 0)
+                {
+                    if (!allow.Contains(worldObject.GetGroup().GetId()))
+                        continue;
+                }
+                else if (disallowList.Value.Length > 0)
+                {
+                    if (disallow.Contains(worldObject.GetGroup().GetId()))
+                        continue;
+                }
+
                 Destroy(m.gameObject);
-                Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory().AddItem(worldObject);
+                player.GetPlayerBackpack().GetInventory().AddItem(worldObject);
                 informationsDisplayer.AddInformation(2f, Readable.GetGroupName(worldObject.GetGroup()), DataConfig.UiInformationsType.InInventory, worldObject.GetGroup().GetImage());
                 worldObject.SetDontSaveMe(false);
                 Managers.GetManager<DisplayersHandler>().GetItemWorldDislpayer().Hide();
