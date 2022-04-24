@@ -4,18 +4,13 @@ using BepInEx.Logging;
 using HarmonyLib;
 using MijuTools;
 using SpaceCraft;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
-using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
 namespace SpawnObject
 {
-    [BepInPlugin("aedenthorn.Delete", "Delete", "0.1.0")]
+    [BepInPlugin("aedenthorn.Delete", "Delete", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -49,6 +44,7 @@ namespace SpawnObject
         {
             if(modEnabled.Value && actionDel.WasPressedThisFrame() && Managers.GetManager<PlayersManager>())
             {
+                Dbgl("Pressed delete key");
                 var aimC = Managers.GetManager<PlayersManager>().GetActivePlayerController().GetAimController();
                 RaycastHit raycastHit;
                 if (Physics.Raycast(aimC.GetAimRay(), out raycastHit, AccessTools.FieldRefAccess<PlayerAimController, float>(aimC, "distanceHitLimit"), AccessTools.FieldRefAccess<PlayerAimController, int>(aimC, "layerMask")))
@@ -69,8 +65,10 @@ namespace SpawnObject
                         }
                         if (t.GetComponent<WorldObjectAssociated>())
                         {
-                            Dbgl($"Destroying parent {t.name}");
+                            Dbgl($"Destroying world object {t.name}");
+                            WorldObjectsHandler.DestroyWorldObject(t.GetComponent<WorldObjectAssociated>().GetWorldObject());
                             Destroy(t.gameObject);
+                            Managers.GetManager<DisplayersHandler>().GetItemWorldDislpayer().Hide();
                             return;
                         }
                         t = t.parent;

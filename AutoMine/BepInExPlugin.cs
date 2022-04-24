@@ -12,7 +12,7 @@ using UnityEngine.InputSystem;
 
 namespace AutoMine
 {
-    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.2.0")]
+    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.2.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
