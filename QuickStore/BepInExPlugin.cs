@@ -10,13 +10,14 @@ using UnityEngine.InputSystem;
 
 namespace QuickStore
 {
-    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.2.0")]
+    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.3.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
 
         private static ConfigEntry<bool> modEnabled;
         private static ConfigEntry<bool> isDebug;
+        private static ConfigEntry<bool> allowStoreInChests;
         private static ConfigEntry<string> storeKey;
         private static ConfigEntry<string> allowList;
         private static ConfigEntry<string> disallowList;
@@ -36,6 +37,7 @@ namespace QuickStore
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
+            allowStoreInChests = Config.Bind<bool>("Options", "AllowStoreInChests", false, "Allow storing in chests.");
             storeKey = Config.Bind<string>("Options", "StoreKey", "<Keyboard>/l", "Key to store items");
             allowList = Config.Bind<string>("Options", "AllowList", "", "Comma-separated list of item IDs to allow storing (overrides DisallowList).");
             disallowList = Config.Bind<string>("Options", "DisallowList", "", "Comma-separated list of item IDs to disallow storing (if AllowList is empty)");
@@ -82,6 +84,10 @@ namespace QuickStore
                 {
                     continue;
                 }
+                if (ial[i].name.StartsWith("Container1") && !allowStoreInChests.Value)
+                    continue;
+                else if (!ial[i].name.StartsWith("Container2"))
+                    continue;
                 if (ial[i].GetInventory() == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() || dist > range.Value || ial[i].GetInventory().IsFull())
                     continue;
                 Dbgl($"checking close inventory {ial[i].name}: {ial[i].transform.position}, {pos}: {dist}m");
