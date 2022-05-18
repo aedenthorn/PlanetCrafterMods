@@ -10,7 +10,7 @@ using UnityEngine.InputSystem;
 
 namespace QuickStore
 {
-    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.3.0")]
+    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.3.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -76,6 +76,8 @@ namespace QuickStore
             for (int i = 0; i < ial.Length; i++)
             {
                 var dist = Vector2.Distance(ial[i].transform.position, pos);
+                if (dist > range.Value || (!ial[i].name.StartsWith("Container1") && !ial[i].name.StartsWith("Container2")) || (ial[i].name.StartsWith("Container1") && !allowStoreInChests.Value))
+                    continue;
                 try
                 {
                     ial[i].GetInventory();
@@ -84,11 +86,7 @@ namespace QuickStore
                 {
                     continue;
                 }
-                if (ial[i].name.StartsWith("Container1") && !allowStoreInChests.Value)
-                    continue;
-                else if (!ial[i].name.StartsWith("Container2"))
-                    continue;
-                if (ial[i].GetInventory() == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() || dist > range.Value || ial[i].GetInventory().IsFull())
+                if (ial[i].GetInventory() == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() || ial[i].GetInventory().IsFull())
                     continue;
                 Dbgl($"checking close inventory {ial[i].name}: {ial[i].transform.position}, {pos}: {dist}m");
 

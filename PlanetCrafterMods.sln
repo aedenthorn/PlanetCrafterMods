@@ -37,6 +37,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoMine", "AutoMine\AutoMi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProgressionRate", "ProgressionRate\ProgressionRate.csproj", "{2AD9D549-7151-4555-833F-F1A98A8D9FED}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpreaderTweaks", "SpreaderTweaks\SpreaderTweaks.csproj", "{C6C6F62C-1612-4716-A4C9-EABC08E44786}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +113,10 @@ Global
 		{2AD9D549-7151-4555-833F-F1A98A8D9FED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2AD9D549-7151-4555-833F-F1A98A8D9FED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2AD9D549-7151-4555-833F-F1A98A8D9FED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6C6F62C-1612-4716-A4C9-EABC08E44786}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6C6F62C-1612-4716-A4C9-EABC08E44786}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6C6F62C-1612-4716-A4C9-EABC08E44786}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6C6F62C-1612-4716-A4C9-EABC08E44786}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
