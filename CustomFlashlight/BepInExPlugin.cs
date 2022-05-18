@@ -2,15 +2,12 @@
 using BepInEx.Configuration;
 using HarmonyLib;
 using SpaceCraft;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
 namespace CustomFlashlight
 {
-    [BepInPlugin("aedenthorn.CustomFlashlight", "Custom Flashlight", "0.1.0")]
+    [BepInPlugin("aedenthorn.CustomFlashlight", "Custom Flashlight", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -57,7 +54,15 @@ namespace CustomFlashlight
             {
                 if (!modEnabled.Value)
                     return;
-                var light = __instance.toolLight.GetComponent<Light>();
+                Light light = __instance.toolLightT1.GetComponent<Light>();
+                light.innerSpotAngle = spotlightInnerAngle.Value;
+                light.spotAngle = spotlightAngle.Value;
+                light.color = color.Value;
+                light.useColorTemperature = useColorTemp.Value;
+                light.colorTemperature = colorTemp.Value;
+                light.intensity = intensity.Value;
+                light.range = range.Value;
+                light = __instance.toolLightT2.GetComponent<Light>();
                 light.innerSpotAngle = spotlightInnerAngle.Value;
                 light.spotAngle = spotlightAngle.Value;
                 light.color = color.Value;
