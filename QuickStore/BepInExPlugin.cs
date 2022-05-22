@@ -105,13 +105,11 @@ namespace QuickStore
                     if (!ial[i].GetInventory().IsFull() && ial[i].GetInventory().GetInsideWorldObjects().Exists(o => o.GetGroup() == objects[j].GetGroup()))
                     {
                         Dbgl($"Storing {objects[j].GetGroup()} in {ial[i].name}");
-                        if (ial[i].GetInventory().AddItem(objects[j]))
-                        {
-                            informationsDisplayer.AddInformation(2f, Readable.GetGroupName(objects[j].GetGroup()), DataConfig.UiInformationsType.OutInventory, objects[j].GetGroup().GetImage());
-                            Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory().RemoveItem(objects[j]);
-                            if (ial[i].GetInventory().IsFull())
-                                break;
-                        }
+                        ial[i].GetInventory().AddItem(objects[j]);
+                        informationsDisplayer.AddInformation(2f, Readable.GetGroupName(objects[j].GetGroup()), DataConfig.UiInformationsType.OutInventory, objects[j].GetGroup().GetImage());
+                        Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory().RemoveItem(objects[j]);
+                        if (ial[i].GetInventory().IsFull())
+                            break;
                     }
                 }
 
