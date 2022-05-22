@@ -12,13 +12,14 @@ using Debug = UnityEngine.Debug;
 
 namespace CraftFromContainers
 {
-    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.2.2")]
+    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.3.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
 
         private static ConfigEntry<bool> modEnabled;
         private static ConfigEntry<bool> isDebug;
+        private static ConfigEntry<bool> pullFromChests;
         private static ConfigEntry<string> toggleKey;
         private static ConfigEntry<string> missingResources;
         private static ConfigEntry<float> range;
@@ -37,6 +38,7 @@ namespace CraftFromContainers
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
+            pullFromChests = Config.Bind<bool>("Options", "PullFromChests", true, "Allow pulling from chests.");
             toggleKey = Config.Bind<string>("Options", "ToggleKey", "<Keyboard>/home", "Key to toggle pulling");
             missingResources = Config.Bind<string>("Options", "MissingResources", "Missing Resources!", "Message to display if you move out of resource range while building.");
             range = Config.Bind<float>("Options", "Range", 20f, "Pull range (m)");
@@ -114,20 +116,18 @@ namespace CraftFromContainers
 
                 for (int i = 0; i < ial.Length; i++)
                 {
-                    try
-                    {
-                        ial[i].GetInventory();
-                    }
-                    catch
-                    {
-                        continue;
-                    }
+
                     var dist = Vector2.Distance(ial[i].transform.position, pos);
-                    if (ial[i].name.Contains("Golden Container") || ial[i].GetInventory() == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() || dist > range.Value)
+                    if (ial[i].name.Contains("Golden Container") || (!pullFromChests.Value && ial[i].name.Contains("Container1")) || dist > range.Value)
                         continue;
+                    Inventory inventory = AccessTools.FieldRefAccess<InventoryAssociated, Inventory>(ial[i], "inventory");
+
+                    if (inventory is null || inventory == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory())
+                        continue;
+
                     Dbgl($"checking close inventory {ial[i].name}: {ial[i].transform.position}, {pos}: {dist}m");
                     skip = true;
-                    List<bool> hasItems = ial[i].GetInventory().ItemsContainsStatus(groupsCopy);
+                    List<bool> hasItems = inventory.ItemsContainsStatus(groupsCopy);
                     skip = false;
                     List<Group> thisGroups = new List<Group>();
                     for (int j = 0; j < hasStatus.Count; j++)
@@ -143,13 +143,13 @@ namespace CraftFromContainers
                     }
                     foreach (Group group in thisGroups)
                     {
-                        for (int j = ial[i].GetInventory().GetInsideWorldObjects().Count - 1; j > -1; j--)
+                        for (int j = inventory.GetInsideWorldObjects().Count - 1; j > -1; j--)
                         {
-                            Dbgl($"\thas {ial[i].GetInventory().GetInsideWorldObjects()[j].GetGroup().GetId()}");
+                            Dbgl($"\thas {inventory.GetInsideWorldObjects()[j].GetGroup().GetId()}");
 
-                            if (ial[i].GetInventory().GetInsideWorldObjects()[j].GetGroup() == group)
+                            if (inventory.GetInsideWorldObjects()[j].GetGroup() == group)
                             {
-                                ial[i].GetInventory().RemoveItem(ial[i].GetInventory().GetInsideWorldObjects()[j], false);
+                                inventory.RemoveItem(inventory.GetInsideWorldObjects()[j], false);
                                 Dbgl($"\tremoved {group.GetId()}");
                                 break;
                             }
@@ -191,20 +191,17 @@ namespace CraftFromContainers
 
                 for (int i = 0; i < ial.Length; i++)
                 {
-                    try
-                    {
-                        ial[i].GetInventory();
-                    }
-                    catch
-                    {
-                        continue;
-                    }
                     var dist = Vector2.Distance(ial[i].transform.position, pos);
-                    if (ial[i].name.Contains("Golden Container") || ial[i].GetInventory() == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() || dist > range.Value)
+                    if (ial[i].name.Contains("Golden Container") || (!pullFromChests.Value && ial[i].name.Contains("Container1")) || dist > range.Value)
                         continue;
+                    Inventory inventory = AccessTools.FieldRefAccess<InventoryAssociated, Inventory>(ial[i], "inventory");
+
+                    if (inventory is null || inventory == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory())
+                        continue;
+
                     //Dbgl($"checking close inventory {ial[i].name}: {ial[i].transform.position}, {pos}: {dist}m");
                     skip = true;
-                    List<bool> hasItems = ial[i].GetInventory().ItemsContainsStatus(groupsCopy);
+                    List<bool> hasItems = inventory.ItemsContainsStatus(groupsCopy);
                     skip = false;
                     for (int j = 0; j < __result.Count; j++)
                     {

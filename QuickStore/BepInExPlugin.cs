@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using HarmonyLib;
 using MijuTools;
 using SpaceCraft;
 using System.Collections.Generic;
@@ -10,13 +11,14 @@ using UnityEngine.InputSystem;
 
 namespace QuickStore
 {
-    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.2.0")]
+    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.3.4")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
 
         private static ConfigEntry<bool> modEnabled;
         private static ConfigEntry<bool> isDebug;
+        private static ConfigEntry<bool> allowStoreInChests;
         private static ConfigEntry<string> storeKey;
         private static ConfigEntry<string> allowList;
         private static ConfigEntry<string> disallowList;
@@ -36,6 +38,7 @@ namespace QuickStore
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
+            allowStoreInChests = Config.Bind<bool>("Options", "AllowStoreInChests", true, "Allow storing in chests.");
             storeKey = Config.Bind<string>("Options", "StoreKey", "<Keyboard>/l", "Key to store items");
             allowList = Config.Bind<string>("Options", "AllowList", "", "Comma-separated list of item IDs to allow storing (overrides DisallowList).");
             disallowList = Config.Bind<string>("Options", "DisallowList", "", "Comma-separated list of item IDs to disallow storing (if AllowList is empty)");
@@ -73,17 +76,15 @@ namespace QuickStore
             InformationsDisplayer informationsDisplayer = Managers.GetManager<DisplayersHandler>().GetInformationsDisplayer();
             for (int i = 0; i < ial.Length; i++)
             {
+
                 var dist = Vector2.Distance(ial[i].transform.position, pos);
-                try
-                {
-                    ial[i].GetInventory();
-                }
-                catch
-                {
+                if (dist > range.Value || (!ial[i].name.StartsWith("Container1") && !ial[i].name.StartsWith("Container2")) || (ial[i].name.StartsWith("Container1") && !allowStoreInChests.Value))
                     continue;
-                }
-                if (ial[i].GetInventory() == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() || dist > range.Value || ial[i].GetInventory().IsFull())
+                Inventory inventory = AccessTools.FieldRefAccess<InventoryAssociated, Inventory>(ial[i], "inventory");
+
+                if (inventory is null || inventory == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() || inventory.IsFull())
                     continue;
+
                 Dbgl($"checking close inventory {ial[i].name}: {ial[i].transform.position}, {pos}: {dist}m");
 
                 for (int j = objects.Count - 1; j >= 0; j--)
@@ -98,13 +99,13 @@ namespace QuickStore
                         if (disallow.Contains(objects[j].GetGroup().GetId()))
                             continue;
                     }
-                    if (!ial[i].GetInventory().IsFull() && ial[i].GetInventory().GetInsideWorldObjects().Exists(o => o.GetGroup() == objects[j].GetGroup()))
+                    if (!inventory.IsFull() && inventory.GetInsideWorldObjects().Exists(o => o.GetGroup() == objects[j].GetGroup()))
                     {
                         Dbgl($"Storing {objects[j].GetGroup()} in {ial[i].name}");
-                        ial[i].GetInventory().AddItem(objects[j]);
+                        inventory.AddItem(objects[j]);
                         informationsDisplayer.AddInformation(2f, Readable.GetGroupName(objects[j].GetGroup()), DataConfig.UiInformationsType.OutInventory, objects[j].GetGroup().GetImage());
                         Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory().RemoveItem(objects[j]);
-                        if (ial[i].GetInventory().IsFull())
+                        if (inventory.IsFull())
                             break;
                     }
                 }
