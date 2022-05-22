@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 
 namespace QuickStore
 {
-    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.3.4")]
+    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.3.5")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -102,11 +102,13 @@ namespace QuickStore
                     if (!inventory.IsFull() && inventory.GetInsideWorldObjects().Exists(o => o.GetGroup() == objects[j].GetGroup()))
                     {
                         Dbgl($"Storing {objects[j].GetGroup()} in {ial[i].name}");
-                        inventory.AddItem(objects[j]);
-                        informationsDisplayer.AddInformation(2f, Readable.GetGroupName(objects[j].GetGroup()), DataConfig.UiInformationsType.OutInventory, objects[j].GetGroup().GetImage());
-                        Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory().RemoveItem(objects[j]);
-                        if (inventory.IsFull())
-                            break;
+                        if (inventory.AddItem(objects[j]))
+                        {
+                            informationsDisplayer.AddInformation(2f, Readable.GetGroupName(objects[j].GetGroup()), DataConfig.UiInformationsType.OutInventory, objects[j].GetGroup().GetImage());
+                            Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory().RemoveItem(objects[j]);
+                            if (inventory.IsFull())
+                                break;
+                        }
                     }
                 }
 
