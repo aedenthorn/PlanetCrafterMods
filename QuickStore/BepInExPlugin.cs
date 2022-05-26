@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 
 namespace QuickStore
 {
-    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.3.5")]
+    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.3.6")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -67,7 +67,7 @@ namespace QuickStore
             List<string> allow = allowList.Value.Split(',').ToList();
             List<string> disallow = disallowList.Value.Split(',').ToList();
             InventoryAssociated[] ial = FindObjectsOfType<InventoryAssociated>();
-            Vector2 pos = Managers.GetManager<PlayersManager>().GetActivePlayerController().transform.position;
+            Vector3 pos = Managers.GetManager<PlayersManager>().GetActivePlayerController().transform.position;
 
             Dbgl($"got {ial.Length} inventories");
 
@@ -77,7 +77,7 @@ namespace QuickStore
             for (int i = 0; i < ial.Length; i++)
             {
 
-                var dist = Vector2.Distance(ial[i].transform.position, pos);
+                var dist = Vector3.Distance(ial[i].transform.position, pos);
                 if (dist > range.Value || (!ial[i].name.StartsWith("Container1") && !ial[i].name.StartsWith("Container2")) || (ial[i].name.StartsWith("Container1") && !allowStoreInChests.Value))
                     continue;
                 Inventory inventory = AccessTools.FieldRefAccess<InventoryAssociated, Inventory>(ial[i], "inventory");

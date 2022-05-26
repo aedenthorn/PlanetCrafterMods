@@ -12,7 +12,7 @@ using UnityEngine.InputSystem;
 
 namespace AutoMine
 {
-    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.2.1")]
+    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.2.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -102,8 +102,8 @@ namespace AutoMine
             int count = 0;
             foreach (var m in FindObjectsOfType<ActionMinable>())
             {
-                Vector2 pos = player.transform.position;
-                var dist = Vector2.Distance(m.transform.position, pos);
+                Vector3 pos = player.transform.position;
+                var dist = Vector3.Distance(m.transform.position, pos);
                 if (dist > maxRange.Value)
                     continue;
 

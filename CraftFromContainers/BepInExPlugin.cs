@@ -12,7 +12,7 @@ using Debug = UnityEngine.Debug;
 
 namespace CraftFromContainers
 {
-    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.3.1")]
+    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.3.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -110,14 +110,14 @@ namespace CraftFromContainers
                     }
                 }
                 InventoryAssociated[] ial = FindObjectsOfType<InventoryAssociated>();
-                Vector2 pos = Managers.GetManager<PlayersManager>().GetActivePlayerController().transform.position;
+                Vector3 pos = Managers.GetManager<PlayersManager>().GetActivePlayerController().transform.position;
 
                 Dbgl($"got {ial.Length} inventories");
 
                 for (int i = 0; i < ial.Length; i++)
                 {
 
-                    var dist = Vector2.Distance(ial[i].transform.position, pos);
+                    var dist = Vector3.Distance(ial[i].transform.position, pos);
                     if (ial[i].name.Contains("Golden Container") || (!pullFromChests.Value && ial[i].name.Contains("Container1")) || dist > range.Value)
                         continue;
                     Inventory inventory = AccessTools.FieldRefAccess<InventoryAssociated, Inventory>(ial[i], "inventory");
@@ -185,13 +185,13 @@ namespace CraftFromContainers
 
 
                 InventoryAssociated[] ial = FindObjectsOfType<InventoryAssociated>();
-                Vector2 pos = Managers.GetManager<PlayersManager>().GetActivePlayerController().transform.position;
+                Vector3 pos = Managers.GetManager<PlayersManager>().GetActivePlayerController().transform.position;
 
                 //Dbgl($"got {ial.Length} inventories");
 
                 for (int i = 0; i < ial.Length; i++)
                 {
-                    var dist = Vector2.Distance(ial[i].transform.position, pos);
+                    var dist = Vector3.Distance(ial[i].transform.position, pos);
                     if (ial[i].name.Contains("Golden Container") || (!pullFromChests.Value && ial[i].name.Contains("Container1")) || dist > range.Value)
                         continue;
                     Inventory inventory = AccessTools.FieldRefAccess<InventoryAssociated, Inventory>(ial[i], "inventory");

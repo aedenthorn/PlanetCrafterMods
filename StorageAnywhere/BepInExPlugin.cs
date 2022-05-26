@@ -14,7 +14,7 @@ using Image = UnityEngine.UI.Image;
 
 namespace StorageAnywhere
 {
-    [BepInPlugin("aedenthorn.StorageAnywhere", "Storage Anywhere", "0.2.0")]
+    [BepInPlugin("aedenthorn.StorageAnywhere", "Storage Anywhere", "0.2.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -258,7 +258,7 @@ namespace StorageAnywhere
         {
             List<InventoryAssociated> result = new List<InventoryAssociated>();
             InventoryAssociated[] ial = FindObjectsOfType<InventoryAssociated>();
-            Vector2 pos = Managers.GetManager<PlayersManager>().GetActivePlayerController().transform.position;
+            Vector3 pos = Managers.GetManager<PlayersManager>().GetActivePlayerController().transform.position;
 
             Dbgl($"got {ial.Length} inventories");
             var ignores = ignoreTypes.Value.Split(',');
@@ -272,7 +272,7 @@ namespace StorageAnywhere
                 {
                     continue;
                 }
-                var dist = Vector2.Distance(ial[i].transform.position, pos);
+                var dist = Vector3.Distance(ial[i].transform.position, pos);
                 if (dist > range.Value)
                     continue;
 
