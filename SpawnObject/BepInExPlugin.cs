@@ -110,14 +110,17 @@ namespace SpawnObject
                 {
                     objectNames = GroupsHandler.GetAllGroups().Select(g => g.GetId());
                     Dbgl($"Got {objectNames.Count()} objects");
-                    /*
-                    List<string> list = new List<string>();
-                    foreach(var group in GroupsHandler.GetAllGroups())
+
+                    if (false)
                     {
-                        list.Add($"{Readable.GetGroupName(group)}: {group.GetId()}");
+                        List<string> list = new List<string>();
+                        foreach (var group in GroupsHandler.GetAllGroups())
+                        {
+                            list.Add($"{Readable.GetGroupName(group)}: {group.GetId()}");
+                        }
+                        list.Sort();
+                        File.WriteAllLines(Path.Combine(AedenthornUtils.GetAssetPath(context, true), "items.txt"), list);
                     }
-                    File.WriteAllLines(Path.Combine(AedenthornUtils.GetAssetPath(context, true), "items.txt"), list);
-                    */
                 }
                 Dbgl("Creating input object");
                 UiWindowTextInput templateWindow = (UiWindowTextInput)Managers.GetManager<WindowsHandler>().GetWindowViaUiId(DataConfig.UiType.TextInput);
