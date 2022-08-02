@@ -15,13 +15,14 @@ using UnityEngine.UI;
 
 namespace SpawnObject
 {
-    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.3.0")]
+    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.4.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
 
         private static ConfigEntry<bool> modEnabled;
         private static ConfigEntry<bool> isDebug;
+        private static ConfigEntry<bool> dumpItems;
         private static ConfigEntry<string> toggleKey;
         private static ConfigEntry<string> itemText;
         private static ConfigEntry<string> amountText;
@@ -41,6 +42,7 @@ namespace SpawnObject
         {
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
+            dumpItems = Config.Bind<bool>("Options", "DumpItems", true, "Set to true to perform a one-time item id dump to BepInEx/plugins/SpawnObject/items.txt the first time you open the GUI.");
             isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
             toggleKey = Config.Bind<string>("Options", "ToggleKey", "<Keyboard>/end", "Key to open / close GUI");
             itemText = Config.Bind<string>("Options", "ItemText", "Enter Item...", "Item text placeholder");
@@ -111,8 +113,9 @@ namespace SpawnObject
                     objectNames = GroupsHandler.GetAllGroups().Select(g => g.GetId());
                     Dbgl($"Got {objectNames.Count()} objects");
 
-                    if (false)
+                    if (dumpItems.Value)
                     {
+                        dumpItems.Value = false;
                         List<string> list = new List<string>();
                         foreach (var group in GroupsHandler.GetAllGroups())
                         {
