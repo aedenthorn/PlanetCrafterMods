@@ -15,7 +15,7 @@ using UnityEngine.UI;
 
 namespace SpawnObject
 {
-    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.4.1")]
+    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.4.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;

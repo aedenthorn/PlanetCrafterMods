@@ -10,7 +10,7 @@ using UnityEngine.InputSystem;
 
 namespace SpawnObject
 {
-    [BepInPlugin("aedenthorn.Delete", "Delete", "0.2.0")]
+    [BepInPlugin("aedenthorn.Delete", "Delete", "0.2.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
