@@ -12,7 +12,7 @@ using UnityEngine.InputSystem;
 
 namespace AutoMine
 {
-    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.2.2")]
+    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.3.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -22,15 +22,19 @@ namespace AutoMine
         private static ConfigEntry<bool> intervalCheck;
         private static ConfigEntry<string> checkToggleKey;
         private static ConfigEntry<string> checkKey;
+        private static ConfigEntry<string> specifyKey;
         private static ConfigEntry<float> checkInterval;
         private static ConfigEntry<float> maxRange;
         private static ConfigEntry<string> allowList;
         private static ConfigEntry<string> disallowList;
+        
+        private static string specifiedID;
 
         private static float elapsed;
 
         private InputAction action;
         private InputAction actionM;
+        private InputAction actionS;
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
             if (isDebug.Value)
@@ -46,6 +50,7 @@ namespace AutoMine
             maxRange = Config.Bind<float>("Options", "MaxRange", 10f, "Range to check in meters");
             checkToggleKey = Config.Bind<string>("Options", "IntervalCheckKey", "<Keyboard>/v", "Key to enable / disable interval checking");
             checkKey = Config.Bind<string>("Options", "CheckKey", "<Keyboard>/c", "Key to check manually");
+            specifyKey = Config.Bind<string>("Options", "SpecifyKey", "<Keyboard>/b", "Key to specify a single type (while aiming at a node of that type).");
             allowList = Config.Bind<string>("Options", "AllowList", "", "Comma-separated list of item IDs to allow mining (overrides DisallowList).");
             disallowList = Config.Bind<string>("Options", "DisallowList", "", "Comma-separated list of item IDs to disallow mining (if AllowList is empty)");
 
@@ -53,6 +58,8 @@ namespace AutoMine
             action.Enable();
             actionM = new InputAction(binding: checkKey.Value);
             actionM.Enable();
+            actionS = new InputAction(binding: specifyKey.Value);
+            actionS.Enable();
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
             Dbgl("Plugin awake");
@@ -78,6 +85,32 @@ namespace AutoMine
                 CheckForNearbyMinables();
                 return;
             }
+            if (actionS.WasPressedThisFrame())
+            {
+                Dbgl($"Pressed specify key");
+                PlayerAimController c = FindObjectOfType<PlayerAimController>();
+                List<Actionnable> aimedActionnables = c.GetAimedActionnables();
+                if (aimedActionnables != null)
+                {
+                    foreach (Actionnable actionnable in aimedActionnables)
+                    {
+                        if (actionnable is ActionMinable)
+                        {
+                            var wo = actionnable.GetComponent<WorldObjectAssociated>();
+                            if (wo is null)
+                                continue;
+                            specifiedID = wo.GetWorldObject().GetGroup().GetId();
+                            AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new PopupData(null, $"AutoMine Target Set To {specifiedID}", 2));
+                            Dbgl($"Found minable {specifiedID}");
+                            return;
+                        }
+                    }
+                }
+                Dbgl($"No minable, nulling specified id");
+                specifiedID = null;
+                AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new PopupData(null, $"AutoMine Target Reset", 2));
+                return;
+            }
             if (intervalCheck.Value)
             {
                 elapsed += Time.deltaTime;
@@ -98,6 +131,8 @@ namespace AutoMine
             List<string> allow = allowList.Value.Split(',').ToList();
             List<string> disallow = disallowList.Value.Split(',').ToList();
             var player = Managers.GetManager<PlayersManager>().GetActivePlayerController();
+            if (player.GetPlayerBackpack().GetInventory().IsFull())
+                return;
             InformationsDisplayer informationsDisplayer = Managers.GetManager<DisplayersHandler>().GetInformationsDisplayer();
             int count = 0;
             foreach (var m in FindObjectsOfType<ActionMinable>())
@@ -113,14 +148,21 @@ namespace AutoMine
 
                 WorldObject worldObject = worldObjectAssociated.GetWorldObject();
 
+                string id = worldObject.GetGroup().GetId();
+
+                if(specifiedID != null && id != specifiedID)
+                {
+                    continue;
+                }
+
                 if (allowList.Value.Length > 0)
                 {
-                    if (!allow.Contains(worldObject.GetGroup().GetId()))
+                    if (!allow.Contains(id))
                         continue;
                 }
                 else if (disallowList.Value.Length > 0)
                 {
-                    if (disallow.Contains(worldObject.GetGroup().GetId()))
+                    if (disallow.Contains(id))
                         continue;
                 }
 
@@ -140,8 +182,8 @@ namespace AutoMine
             if(count > 0)
             {
                 player.GetPlayerAudio().PlayGrab();
+                Dbgl($"Mined {count} items");
             }
-            Dbgl($"Mined {count} items");
         }
 
     }

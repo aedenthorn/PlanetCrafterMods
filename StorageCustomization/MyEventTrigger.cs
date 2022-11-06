@@ -15,7 +15,7 @@ namespace StorageCustomization
 			entry.eventID = _triggerType;
 			entry.callback.AddListener(delegate (BaseEventData data)
 			{
-				_callBack(new EventTriggerCallbackData((PointerEventData)data, _group, _worldObject));
+				_callBack(new EventTriggerCallbackData((PointerEventData)data, _group, _worldObject, 0));
 			});
 			_gameObject.AddComponent<MyEventTrigger>().triggers.Add(entry);
 		}

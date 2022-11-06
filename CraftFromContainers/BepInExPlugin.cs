@@ -193,7 +193,10 @@ namespace CraftFromContainers
                 {
                     var dist = Vector3.Distance(ial[i].transform.position, pos);
                     if (ial[i].name.Contains("Golden Container") || (!pullFromChests.Value && ial[i].name.Contains("Container1")) || dist > range.Value)
+                    {
+                        //Dbgl($"can't use {ial[i].name}; pfc {pullFromChests.Value}, dist {dist}/{range.Value} ");
                         continue;
+                    }
                     Inventory inventory = AccessTools.FieldRefAccess<InventoryAssociated, Inventory>(ial[i], "inventory");
 
                     if (inventory is null || inventory == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory())
