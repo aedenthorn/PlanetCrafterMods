@@ -39,6 +39,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProgressionRate", "Progress
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpreaderTweaks", "SpreaderTweaks\SpreaderTweaks.csproj", "{C6C6F62C-1612-4716-A4C9-EABC08E44786}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomAudio", "CustomAudio\CustomAudio.csproj", "{BD76851D-62A7-418E-8571-F986844D54B1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -117,6 +119,10 @@ Global
 		{C6C6F62C-1612-4716-A4C9-EABC08E44786}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C6C6F62C-1612-4716-A4C9-EABC08E44786}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C6C6F62C-1612-4716-A4C9-EABC08E44786}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD76851D-62A7-418E-8571-F986844D54B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD76851D-62A7-418E-8571-F986844D54B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD76851D-62A7-418E-8571-F986844D54B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD76851D-62A7-418E-8571-F986844D54B1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

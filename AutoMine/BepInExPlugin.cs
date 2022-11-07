@@ -73,7 +73,7 @@ namespace AutoMine
             {
                 intervalCheck.Value = !intervalCheck.Value;
                 if (Managers.GetManager<PopupsHandler>() != null)
-                    AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new PopupData(null, $"AutoMine {(intervalCheck.Value ? "Enabled" : "Disabled")}", 2));
+                    AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new CustomPopupData(null, $"AutoMine {(intervalCheck.Value ? "Enabled" : "Disabled")}", 2, true, null));
                 if(intervalCheck.Value)
                     elapsed = checkInterval.Value;
                 return;
