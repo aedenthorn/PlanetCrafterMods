@@ -11,7 +11,7 @@ using Random = UnityEngine.Random;
 
 namespace BetterMeteorites
 {
-    [BepInPlugin("aedenthorn.BetterMeteorites", "Better Meteorites", "0.1.1")]
+    [BepInPlugin("aedenthorn.BetterMeteorites", "Better Meteorites", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -44,10 +44,10 @@ namespace BetterMeteorites
             Dbgl("Plugin awake");
         }
 
-        [HarmonyPatch(typeof(MeteoHandler), "Start")]
-        static class MeteoHandler_Start_Patch
+        [HarmonyPatch(typeof(MeteoHandler), nameof(MeteoHandler.InitMeteoHandler))]
+        static class MeteoHandler_InitMeteoHandler_Patch
         {
-            static void Postfix(MeteoHandler __instance)
+            static void Postfix(MeteoHandler __instance, List<MeteoEventData> ___meteoEvents)
             {
                 if (!modEnabled.Value || !addSpecialAsteroids.Value)
                     return;
@@ -59,13 +59,13 @@ namespace BetterMeteorites
                     var e = s.meteoEvents.Find(d => d.name.Contains("Uranium"));
                     if (e != null)
                     {
-                        __instance.meteoEvents.Add(e);
+                        ___meteoEvents.Add(e);
                         Dbgl($"added uranium event");
                     }
                     e = s.meteoEvents.Find(d => d.name.Contains("Iridium"));
                     if (e != null)
                     {
-                        __instance.meteoEvents.Add(e);
+                        ___meteoEvents.Add(e);
                         Dbgl($"added iridium event");
                     }
                 }

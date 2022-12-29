@@ -12,7 +12,7 @@ using UnityEngine.InputSystem;
 
 namespace AutoMine
 {
-    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.3.0")]
+    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.4.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -27,14 +27,14 @@ namespace AutoMine
         private static ConfigEntry<float> maxRange;
         private static ConfigEntry<string> allowList;
         private static ConfigEntry<string> disallowList;
-        
+
         private static string specifiedID;
 
         private static float elapsed;
 
-        private InputAction action;
-        private InputAction actionM;
-        private InputAction actionS;
+        private static InputAction action;
+        private static InputAction actionM;
+        private static InputAction actionS;
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
             if (isDebug.Value)
@@ -65,65 +65,69 @@ namespace AutoMine
             Dbgl("Plugin awake");
         }
 
-        private void Update()
+        [HarmonyPatch(typeof(PlayerInputDispatcher), "Update")]
+        static class PlayerInputDispatcher_Update_Patch
         {
-            if (!modEnabled.Value)
-                return;
-            if (action.WasPressedThisFrame())
+            static void Postfix()
             {
-                intervalCheck.Value = !intervalCheck.Value;
-                if (Managers.GetManager<PopupsHandler>() != null)
-                    AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new CustomPopupData(null, $"AutoMine {(intervalCheck.Value ? "Enabled" : "Disabled")}", 2, true, null));
-                if(intervalCheck.Value)
-                    elapsed = checkInterval.Value;
-                return;
-            }
-            if (actionM.WasPressedThisFrame())
-            {
-                Dbgl($"Pressed manual check key");
-                elapsed = 0;
-                CheckForNearbyMinables();
-                return;
-            }
-            if (actionS.WasPressedThisFrame())
-            {
-                Dbgl($"Pressed specify key");
-                PlayerAimController c = FindObjectOfType<PlayerAimController>();
-                List<Actionnable> aimedActionnables = c.GetAimedActionnables();
-                if (aimedActionnables != null)
+                if (!modEnabled.Value)
+                    return;
+                if (action.WasPressedThisFrame())
                 {
-                    foreach (Actionnable actionnable in aimedActionnables)
-                    {
-                        if (actionnable is ActionMinable)
-                        {
-                            var wo = actionnable.GetComponent<WorldObjectAssociated>();
-                            if (wo is null)
-                                continue;
-                            specifiedID = wo.GetWorldObject().GetGroup().GetId();
-                            AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new PopupData(null, $"AutoMine Target Set To {specifiedID}", 2));
-                            Dbgl($"Found minable {specifiedID}");
-                            return;
-                        }
-                    }
+                    intervalCheck.Value = !intervalCheck.Value;
+                    if (Managers.GetManager<PopupsHandler>() != null)
+                        AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new CustomPopupData(null, $"AutoMine {(intervalCheck.Value ? "Enabled" : "Disabled")}", 2, true, null));
+                    if (intervalCheck.Value)
+                        elapsed = checkInterval.Value;
+                    return;
                 }
-                Dbgl($"No minable, nulling specified id");
-                specifiedID = null;
-                AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new PopupData(null, $"AutoMine Target Reset", 2));
-                return;
-            }
-            if (intervalCheck.Value)
-            {
-                elapsed += Time.deltaTime;
-                if (elapsed > checkInterval.Value)
+                if (actionM.WasPressedThisFrame())
                 {
+                    Dbgl($"Pressed manual check key");
                     elapsed = 0;
                     CheckForNearbyMinables();
                     return;
                 }
+                if (actionS.WasPressedThisFrame())
+                {
+                    Dbgl($"Pressed specify key");
+                    PlayerAimController c = FindObjectOfType<PlayerAimController>();
+                    List<Actionnable> aimedActionnables = c.GetAimedActionnables();
+                    if (aimedActionnables != null)
+                    {
+                        foreach (Actionnable actionnable in aimedActionnables)
+                        {
+                            if (actionnable is ActionMinable)
+                            {
+                                var wo = actionnable.GetComponent<WorldObjectAssociated>();
+                                if (wo is null)
+                                    continue;
+                                specifiedID = wo.GetWorldObject().GetGroup().GetId();
+                                AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new PopupData(null, $"AutoMine Target Set To {specifiedID}", 2));
+                                Dbgl($"Found minable {specifiedID}");
+                                return;
+                            }
+                        }
+                    }
+                    Dbgl($"No minable, nulling specified id");
+                    specifiedID = null;
+                    AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new PopupData(null, $"AutoMine Target Reset", 2));
+                    return;
+                }
+                if (intervalCheck.Value)
+                {
+                    elapsed += Time.deltaTime;
+                    if (elapsed > checkInterval.Value)
+                    {
+                        elapsed = 0;
+                        CheckForNearbyMinables();
+                        return;
+                    }
+                }
             }
         }
 
-        private void CheckForNearbyMinables()
+        private static void CheckForNearbyMinables()
         {
             if (!Managers.GetManager<PlayersManager>() || Managers.GetManager<WindowsHandler>().GetHasUiOpen())
                 return;
@@ -150,7 +154,7 @@ namespace AutoMine
 
                 string id = worldObject.GetGroup().GetId();
 
-                if(specifiedID != null && id != specifiedID)
+                if (specifiedID != null && id != specifiedID)
                 {
                     continue;
                 }
@@ -173,13 +177,13 @@ namespace AutoMine
                     worldObject.SetDontSaveMe(false);
                     Managers.GetManager<DisplayersHandler>().GetItemWorldDislpayer().Hide();
                     count++;
-                } 
+                }
                 else
                 {
                     break;
                 }
             }
-            if(count > 0)
+            if (count > 0)
             {
                 player.GetPlayerAudio().PlayGrab();
                 Dbgl($"Mined {count} items");
