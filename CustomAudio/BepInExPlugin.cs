@@ -2,7 +2,6 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using MijuTools;
 using SpaceCraft;
 using System;
 using System.Collections.Generic;
@@ -17,7 +16,7 @@ using UnityEngine.Networking;
 
 namespace CustomAudio
 {
-    [BepInPlugin("aedenthorn.CustomAudio", "CustomAudio", "0.1.0")]
+    [BepInPlugin("aedenthorn.CustomAudio", "CustomAudio", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;

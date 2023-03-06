@@ -2,7 +2,6 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using MijuTools;
 using SpaceCraft;
 using System.Collections.Generic;
 using System.Reflection;
@@ -12,7 +11,7 @@ using Debug = UnityEngine.Debug;
 
 namespace QuickRotate
 {
-    [BepInPlugin("aedenthorn.QuickRotate", "Quick Rotate", "0.1.0")]
+    [BepInPlugin("aedenthorn.QuickRotate", "Quick Rotate", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;

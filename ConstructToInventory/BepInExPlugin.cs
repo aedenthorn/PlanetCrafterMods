@@ -2,7 +2,6 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using MijuTools;
 using SpaceCraft;
 using System.Collections.Generic;
 using System.Reflection;

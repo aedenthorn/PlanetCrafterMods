@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace CustomFlashlight
 {
-    [BepInPlugin("aedenthorn.CustomFlashlight", "Custom Flashlight", "0.2.0")]
+    [BepInPlugin("aedenthorn.CustomFlashlight", "Custom Flashlight", "0.3.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;

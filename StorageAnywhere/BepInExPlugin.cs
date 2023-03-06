@@ -2,7 +2,6 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using MijuTools;
 using SpaceCraft;
 using System.Collections.Generic;
 using System.Reflection;
@@ -14,7 +13,7 @@ using Image = UnityEngine.UI.Image;
 
 namespace StorageAnywhere
 {
-    [BepInPlugin("aedenthorn.StorageAnywhere", "Storage Anywhere", "0.2.1")]
+    [BepInPlugin("aedenthorn.StorageAnywhere", "Storage Anywhere", "0.3.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -29,9 +28,9 @@ namespace StorageAnywhere
         private static ConfigEntry<string> rightKey;
         private static ConfigEntry<float> range;
 
-        private InputAction action;
-        private InputAction actionLeft;
-        private InputAction actionRight;
+        private static InputAction action;
+        private static InputAction actionLeft;
+        private static InputAction actionRight;
         private static List<InventoryAssociated> inventoryList = new List<InventoryAssociated>();
         private static int currentIndex = 0;
         private static TMP_Dropdown dropDown;
@@ -67,48 +66,51 @@ namespace StorageAnywhere
 
         }
 
-
-        private void Update()
+        [HarmonyPatch(typeof(PlayerInputDispatcher), "Update")]
+        static class PlayerInputDispatcher_Update_Patch
         {
-            if (!modEnabled.Value || Managers.GetManager<PlayersManager>() == null)
-                return;
-            if (action.WasPressedThisFrame())
+            static void Postfix()
             {
-                if (Managers.GetManager<WindowsHandler>().GetHasUiOpen())
-                {
-                    if(Managers.GetManager<WindowsHandler>().GetOpenedUi() == DataConfig.UiType.Container)
-                    {
-                        Managers.GetManager<WindowsHandler>().CloseAllWindows();
-                    }
+                if (!modEnabled.Value || Managers.GetManager<PlayersManager>() == null)
                     return;
+                if (action.WasPressedThisFrame())
+                {
+                    if (Managers.GetManager<WindowsHandler>().GetHasUiOpen())
+                    {
+                        if (Managers.GetManager<WindowsHandler>().GetOpenedUi() == DataConfig.UiType.Container)
+                        {
+                            Managers.GetManager<WindowsHandler>().CloseAllWindows();
+                        }
+                        return;
+                    }
+                    currentIndex = 0;
+                    inventoryList = GetNearbyInventories();
+                    SetInventories();
                 }
-                currentIndex = 0;
-                inventoryList = GetNearbyInventories();
-                SetInventories();
-            }
-            else if (!Managers.GetManager<WindowsHandler>().GetHasUiOpen())
-            {
-                currentIndex = 0;
-                inventoryList.Clear();
-            }
-            else if (actionRight.WasPressedThisFrame() && Managers.GetManager<WindowsHandler>().GetOpenedUi() == DataConfig.UiType.Container)
-            {
-                inventoryList = GetNearbyInventories();
-                currentIndex++;
-                currentIndex %= inventoryList.Count;
-                SetInventories();
-            }
-            else if (actionLeft.WasPressedThisFrame() && Managers.GetManager<WindowsHandler>().GetOpenedUi() == DataConfig.UiType.Container)
-            {
-                inventoryList = GetNearbyInventories();
-                currentIndex--;
-                if(currentIndex < 0)
-                    currentIndex = inventoryList.Count - 1;
-                SetInventories();
+                else if (!Managers.GetManager<WindowsHandler>().GetHasUiOpen())
+                {
+                    currentIndex = 0;
+                    inventoryList.Clear();
+                }
+                else if (actionRight.WasPressedThisFrame() && Managers.GetManager<WindowsHandler>().GetOpenedUi() == DataConfig.UiType.Container)
+                {
+                    inventoryList = GetNearbyInventories();
+                    currentIndex++;
+                    currentIndex %= inventoryList.Count;
+                    SetInventories();
+                }
+                else if (actionLeft.WasPressedThisFrame() && Managers.GetManager<WindowsHandler>().GetOpenedUi() == DataConfig.UiType.Container)
+                {
+                    inventoryList = GetNearbyInventories();
+                    currentIndex--;
+                    if (currentIndex < 0)
+                        currentIndex = inventoryList.Count - 1;
+                    SetInventories();
+                }
             }
         }
 
-        private void SetInventories()
+        private static void SetInventories()
         {
             Managers.GetManager<WindowsHandler>().CloseAllWindows();
 
@@ -213,22 +215,22 @@ namespace StorageAnywhere
                 dropDown.RefreshShownValue();
                 dropDown.onValueChanged.AddListener(ChangeInventory);
 
-                uiWindowContainer.SetInventories(Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory(), inventoryList[currentIndex].GetInventory());
+                uiWindowContainer.SetInventories(Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory(), inventoryList[currentIndex].GetInventory(), false);
             }
         }
 
-        private void OnItemHover(EventTriggerCallbackData obj)
+        private static void OnItemHover(EventTriggerCallbackData obj)
         {
             Managers.GetManager<GlobalAudioHandler>().PlayUiHover();
         }
 
-        private void ChangeInventory(int arg0)
+        private static void ChangeInventory(int arg0)
         {
             currentIndex = arg0;
             SetInventories();
         }
 
-        private string GetObjectName(GameObject go, bool typeOnly = false, bool nameOnly = false)
+        private static string GetObjectName(GameObject go, bool typeOnly = false, bool nameOnly = false)
         {
             Transform t = go.transform;
             if (!typeOnly && t.GetComponent<WorldObjectText>() != null)
@@ -254,7 +256,7 @@ namespace StorageAnywhere
             return typeOnly || nameOnly ? "" : t.name.Replace("(Clone)", "");
         }
 
-        private List<InventoryAssociated> GetNearbyInventories()
+        private static List<InventoryAssociated> GetNearbyInventories()
         {
             List<InventoryAssociated> result = new List<InventoryAssociated>();
             InventoryAssociated[] ial = FindObjectsOfType<InventoryAssociated>();

@@ -2,7 +2,6 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using MijuTools;
 using SpaceCraft;
 using System.Reflection;
 using UnityEngine;
@@ -10,7 +9,7 @@ using UnityEngine.InputSystem;
 
 namespace SpawnObject
 {
-    [BepInPlugin("aedenthorn.Delete", "Delete", "0.2.1")]
+    [BepInPlugin("aedenthorn.Delete", "Delete", "0.3.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;

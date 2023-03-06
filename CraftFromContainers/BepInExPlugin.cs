@@ -2,7 +2,6 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using MijuTools;
 using SpaceCraft;
 using System.Collections.Generic;
 using System.Reflection;
@@ -12,7 +11,7 @@ using Debug = UnityEngine.Debug;
 
 namespace CraftFromContainers
 {
-    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.3.2")]
+    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.4.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;

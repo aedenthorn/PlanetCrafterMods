@@ -2,16 +2,16 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using MijuTools;
 using SpaceCraft;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace QuickStore
 {
-    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.3.6")]
+    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.4.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -24,7 +24,7 @@ namespace QuickStore
         private static ConfigEntry<string> disallowList;
         private static ConfigEntry<float> range;
 
-        private InputAction action;
+        private static InputAction action;
 
         private static bool skip;
 
@@ -50,19 +50,25 @@ namespace QuickStore
             action = new InputAction(binding: storeKey.Value);
             action.Enable();
 
+            Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
+
             Dbgl("Plugin awake");
 
         }
-        private void Update()
+        [HarmonyPatch(typeof(PlayerInputDispatcher), "Update")]
+        static class PlayerInputDispatcher_Update_Patch
         {
-            if (modEnabled.Value && Managers.GetManager<WindowsHandler>()?.GetHasUiOpen() == false && action.WasPressedThisFrame())
+            static void Postfix()
             {
-                Dbgl("Hotkey Pressed");
+                if (modEnabled.Value && Managers.GetManager<WindowsHandler>()?.GetHasUiOpen() == false && action.WasPressedThisFrame())
+                {
+                    Dbgl("Hotkey Pressed");
 
-                StoreItems();
+                    StoreItems();
+                }
             }
         }
-        private void StoreItems()
+        private static void StoreItems()
         {
             List<string> allow = allowList.Value.Split(',').ToList();
             List<string> disallow = disallowList.Value.Split(',').ToList();

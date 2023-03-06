@@ -2,7 +2,6 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using MijuTools;
 using SpaceCraft;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +11,7 @@ using UnityEngine.InputSystem;
 
 namespace AutoMine
 {
-    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.4.0")]
+    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.5.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;

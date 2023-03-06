@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace BetterJetPack
 {
-    [BepInPlugin("aedenthorn.BetterJetPack", "Better JetPack", "0.1.1")]
+    [BepInPlugin("aedenthorn.BetterJetPack", "Better JetPack", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;

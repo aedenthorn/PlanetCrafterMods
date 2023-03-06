@@ -2,8 +2,8 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using MijuTools;
 using SpaceCraft;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,11 +11,12 @@ using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.XR;
 using UnityEngine.UI;
 
 namespace SpawnObject
 {
-    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.5.0")]
+    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.6.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -166,6 +167,9 @@ namespace SpawnObject
                     goButton.onClick.AddListener(delegate () {
                         var text = inputField.text;
                         var amount = numberFieldObject.GetComponent<TMP_InputField>().text;
+                        var controller = Managers.GetManager<PlayersManager>().GetActivePlayerController();
+                        var aimray = controller.GetAimController().GetAimRay();
+                        var backpack = controller.GetPlayerBackpack();
                         if (text.Length > 0 && amount.Length > 0 && objectNames.Contains(text))
                         {
                             Dbgl($"Spawning {amount} {text}");
@@ -175,13 +179,19 @@ namespace SpawnObject
                             {
                                 while (i++ < int.Parse(amount))
                                 {
-                                    if (Keyboard.current.leftShiftKey.isPressed && !Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory().IsFull())
+                                    if (Keyboard.current.leftShiftKey.isPressed && !backpack.GetInventory().IsFull())
                                     {
-                                        Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory().AddItem(WorldObjectsHandler.CreateNewWorldObject(group));
+                                        backpack.GetInventory().AddItem(WorldObjectsHandler.CreateNewWorldObject(group));
+                                    }
+                                    else if(group is GroupConstructible)
+                                    {
+                                        Dbgl($"{context is null}");
+                                        controller.StartCoroutine(BuildObject(group));
+                                        break;
                                     }
                                     else
                                     {
-                                        WorldObjectsHandler.CreateAndDropOnFloor(group, Managers.GetManager<PlayersManager>().GetActivePlayerController().GetAimController().GetAimRay().GetPoint(0.7f));
+                                        WorldObjectsHandler.CreateAndDropOnFloor(group, aimray.GetPoint(0.7f));
                                     }
                                 }
                             }
@@ -255,6 +265,19 @@ namespace SpawnObject
                     windowViaUiId.OnOpen();
                     AccessTools.FieldRefAccess<WindowsHandler, DataConfig.UiType>(Managers.GetManager<WindowsHandler>(), "openedUi") = DataConfig.UiType.TextInput;
                 }
+            }
+        }
+
+        public static IEnumerator BuildObject(Group group)
+        {
+            GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(group.GetAssociatedGameObject());
+            var ghost = gameObject.AddComponent<ConstructibleGhost>();
+            ghost.InitGhost((GroupConstructible)group, Managers.GetManager<PlayersManager>().GetActivePlayerController().GetAimController());
+            yield return new WaitForEndOfFrame();
+            AccessTools.Method(typeof(GhostPlacementChecker), "CheckPlacement").Invoke(ghost.gameObject.GetComponent<GhostPlacementChecker>(), new object[0]);
+            if (!ghost.Place())
+            {
+                ghost.DestroyGhost();
             }
         }
     }

@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace DrillSound
 {
-    [BepInPlugin("aedenthorn.DrillSound", "Drill Sound", "0.1.0")]
+    [BepInPlugin("aedenthorn.DrillSound", "Drill Sound", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;

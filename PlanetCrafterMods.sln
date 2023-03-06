@@ -41,6 +41,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpreaderTweaks", "SpreaderT
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomAudio", "CustomAudio\CustomAudio.csproj", "{BD76851D-62A7-418E-8571-F986844D54B1}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoCrafterTweaks", "..\SubnauticaMods\AutoCrafterTweaks\AutoCrafterTweaks.csproj", "{CD55F04B-40BC-42AD-9D0F-849DB6D598C7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CameraShakeTweaks", "..\SubnauticaMods\CameraShakeTweaks\CameraShakeTweaks.csproj", "{674C5ADF-CBE3-4BFB-8067-15E9316DD15C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -123,6 +127,14 @@ Global
 		{BD76851D-62A7-418E-8571-F986844D54B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD76851D-62A7-418E-8571-F986844D54B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD76851D-62A7-418E-8571-F986844D54B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD55F04B-40BC-42AD-9D0F-849DB6D598C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD55F04B-40BC-42AD-9D0F-849DB6D598C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD55F04B-40BC-42AD-9D0F-849DB6D598C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD55F04B-40BC-42AD-9D0F-849DB6D598C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{674C5ADF-CBE3-4BFB-8067-15E9316DD15C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{674C5ADF-CBE3-4BFB-8067-15E9316DD15C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{674C5ADF-CBE3-4BFB-8067-15E9316DD15C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{674C5ADF-CBE3-4BFB-8067-15E9316DD15C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

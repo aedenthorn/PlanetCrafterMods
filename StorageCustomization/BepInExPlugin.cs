@@ -15,7 +15,7 @@ using Image = UnityEngine.UI.Image;
 
 namespace StorageCustomization
 {
-    [BepInPlugin("aedenthorn.StorageCustomization", "Storage Customization", "0.3.2")]
+    [BepInPlugin("aedenthorn.StorageCustomization", "Storage Customization", "0.5.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -106,10 +106,10 @@ namespace StorageCustomization
             {
                 if (!modEnabled.Value)
                     return;
-                InventoryAssociated componentOnGameObjectOrInParent = Components.GetComponentOnGameObjectOrInParent<InventoryAssociated>(__instance.gameObject);
-                if (componentOnGameObjectOrInParent == null)
+                InventoryAssociated componentInParent = __instance.GetComponentInParent<InventoryAssociated>();
+                if (componentInParent == null)
                     return;
-                Inventory i = componentOnGameObjectOrInParent.GetInventory();
+                Inventory i = componentInParent.GetInventory();
                 if (__instance.name.StartsWith("Container1"))
                 {
                     i.SetSize(chestStorageSize.Value);
@@ -133,7 +133,7 @@ namespace StorageCustomization
                 else
                     return;
                 Dbgl($"Set storage size of {__instance.name} to {i.GetSize()}");
-                componentOnGameObjectOrInParent.SetInventory(i);
+                componentInParent.SetInventory(i);
             }
         }
         [HarmonyPatch(typeof(InventoryDisplayer), nameof(InventoryDisplayer.TrueRefreshContent))]
