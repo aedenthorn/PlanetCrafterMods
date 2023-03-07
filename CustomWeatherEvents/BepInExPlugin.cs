@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using HarmonyLib;
 using SpaceCraft;
@@ -29,6 +30,9 @@ namespace CustomWeatherEvents
         private static WeatherDataDict meteoEventDict;
         private static bool firstTry;
 
+        const string modFeatMultiplayerGuid = "akarnokd.theplanetcraftermods.featmultiplayer";
+        private static MethodInfo GetMultiplayerMode;
+
         public static void Dbgl(string str = "", bool pref = true)
         {
             if (isDebug.Value)
@@ -44,6 +48,12 @@ namespace CustomWeatherEvents
             launchCheckInterval = Config.Bind<float>("Options", "LaunchCheckInterval", 20f, "Launch check interval (seconds)");
             launchChancePerCheck = Config.Bind<float>("Options", "LaunchChancePerCheck", 2f, "Launch chance per check (%)");
             spawnedResourcesDestroyMultiplier = Config.Bind<int>("Options", "SpawnedResourcesDestroyMultiplier", 8, "Asteroid resources disappear this many times slower than ordinary asteroid chunks (as defined in the event data field 'debrisDestroyTime').");
+
+            if (Chainloader.PluginInfos.TryGetValue(modFeatMultiplayerGuid, out var pi))
+            {
+                GetMultiplayerMode = AccessTools.Method(pi.Instance.GetType(), "GetMultiplayerMode");
+                Dbgl("Found " + modFeatMultiplayerGuid + ", disabling launch overrides in client mode.");
+            }
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), Info.Metadata.GUID);
             Dbgl("Plugin awake");
@@ -69,6 +79,9 @@ namespace CustomWeatherEvents
             {
                 if (___meteoEventQueue.Count > 0 || ___selectedDataMeteoEvent != null)
                     return true;
+
+                if (GetMultiplayerMode != null && ((string)GetMultiplayerMode.Invoke(null, new object[0])) == "CoopClient")
+                    return false;
 
                 if (firstTry)
                 {
