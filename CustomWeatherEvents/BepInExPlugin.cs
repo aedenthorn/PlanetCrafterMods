@@ -3,19 +3,17 @@ using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using HarmonyLib;
 using SpaceCraft;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Security.Cryptography;
 using System.Text.Json;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
 namespace CustomWeatherEvents
 {
-    [BepInPlugin("aedenthorn.CustomWeatherEvents", "Custom Weather Events", "0.1.0")]
+    [BepInPlugin("aedenthorn.CustomWeatherEvents", "Custom Weather Events", "0.1.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -143,7 +141,7 @@ namespace CustomWeatherEvents
         {
             static void Prefix(MeteoHandler __instance)
             {
-                Dbgl($"Default launch chance per interval {__instance.eventChanceOnOneHundred}");
+                //Dbgl($"Default launch chance per interval {__instance.eventChanceOnOneHundred}");
                 Dbgl($"Changing tryToLaunchEventEvery from {__instance.tryToLaunchEventEvery} to {launchCheckInterval.Value}");
 
                 firstTry = true;
