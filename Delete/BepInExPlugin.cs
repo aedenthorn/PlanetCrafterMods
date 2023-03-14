@@ -3,13 +3,15 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using SpaceCraft;
+using System.Collections.Generic;
+using System;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace SpawnObject
 {
-    [BepInPlugin("aedenthorn.Delete", "Delete", "0.3.0")]
+    [BepInPlugin("aedenthorn.Delete", "Delete", "0.4.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -18,7 +20,7 @@ namespace SpawnObject
         private static ConfigEntry<bool> isDebug;
         private static ConfigEntry<string> delKey;
 
-        private InputAction actionDel;
+        private static InputAction actionDel;
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
             if (isDebug.Value)
@@ -39,45 +41,50 @@ namespace SpawnObject
             Dbgl("Plugin awake");
         }
 
-        private void Update()
+        [HarmonyPatch(typeof(PlayerInputDispatcher), "Update")]
+        static class PlayerInputDispatcher_Update_Patch
         {
-            if(modEnabled.Value && actionDel.WasPressedThisFrame() && Managers.GetManager<PlayersManager>())
+            static void Postfix()
             {
-                Dbgl("Pressed delete key");
-                var aimC = Managers.GetManager<PlayersManager>().GetActivePlayerController().GetAimController();
-                RaycastHit raycastHit;
-                if (Physics.Raycast(aimC.GetAimRay(), out raycastHit, AccessTools.FieldRefAccess<PlayerAimController, float>(aimC, "distanceHitLimit"), AccessTools.FieldRefAccess<PlayerAimController, int>(aimC, "layerMask")))
+                if (!modEnabled.Value)
+                    return;
+                if (actionDel.WasPressedThisFrame() && Managers.GetManager<PlayersManager>())
                 {
-                    Dbgl($"raycast hit {raycastHit.transform.name}");
-
-                    var t = raycastHit.transform;
-                    while (t)
+                    Dbgl("Pressed delete key");
+                    var aimC = Managers.GetManager<PlayersManager>().GetActivePlayerController().GetAimController();
+                    RaycastHit raycastHit;
+                    if (Physics.Raycast(aimC.GetAimRay(), out raycastHit, AccessTools.FieldRefAccess<PlayerAimController, float>(aimC, "distanceHitLimit"), AccessTools.FieldRefAccess<PlayerAimController, int>(aimC, "layerMask")))
                     {
-                        if (t.GetComponentInChildren<ActionDeconstructible>())
+                        Dbgl($"raycast hit {raycastHit.transform.name}");
+
+                        var t = raycastHit.transform;
+                        while (t)
                         {
-                            var state = Managers.GetManager<PlayersManager>().GetActivePlayerController().GetMultitool().GetState();
-                            Managers.GetManager<PlayersManager>().GetActivePlayerController().GetMultitool().SetState(DataConfig.MultiToolState.Deconstruct);
-                            Dbgl($"Deconstructing {raycastHit.transform.name}");
-                            t.GetComponentInChildren<ActionDeconstructible>().OnAction();
-                            Managers.GetManager<PlayersManager>().GetActivePlayerController().GetMultitool().SetState(state);
-                            return;
+                            if (t.GetComponentInChildren<ActionDeconstructible>())
+                            {
+                                var state = Managers.GetManager<PlayersManager>().GetActivePlayerController().GetMultitool().GetState();
+                                Managers.GetManager<PlayersManager>().GetActivePlayerController().GetMultitool().SetState(DataConfig.MultiToolState.Deconstruct);
+                                Dbgl($"Deconstructing {raycastHit.transform.name}");
+                                t.GetComponentInChildren<ActionDeconstructible>().OnAction();
+                                Managers.GetManager<PlayersManager>().GetActivePlayerController().GetMultitool().SetState(state);
+                                return;
+                            }
+                            if (t.GetComponent<WorldObjectAssociated>())
+                            {
+                                Dbgl($"Destroying world object {t.name}");
+                                WorldObjectsHandler.DestroyWorldObject(t.GetComponent<WorldObjectAssociated>().GetWorldObject());
+                                Destroy(t.gameObject);
+                                Managers.GetManager<DisplayersHandler>().GetItemWorldDislpayer().Hide();
+                                return;
+                            }
+                            t = t.parent;
                         }
-                        if (t.GetComponent<WorldObjectAssociated>())
-                        {
-                            Dbgl($"Destroying world object {t.name}");
-                            WorldObjectsHandler.DestroyWorldObject(t.GetComponent<WorldObjectAssociated>().GetWorldObject());
-                            Destroy(t.gameObject);
-                            Managers.GetManager<DisplayersHandler>().GetItemWorldDislpayer().Hide();
-                            return;
-                        }
-                        t = t.parent;
+                        Dbgl($"Destroying {raycastHit.transform.name}");
+                        Destroy(raycastHit.transform.gameObject);
+                        Managers.GetManager<DisplayersHandler>().GetItemWorldDislpayer().Hide();
                     }
-                    Dbgl($"Destroying {raycastHit.transform.name}");
-                    Destroy(raycastHit.transform.gameObject);
-                    Managers.GetManager<DisplayersHandler>().GetItemWorldDislpayer().Hide();
                 }
             }
-
         }
     }
 }
