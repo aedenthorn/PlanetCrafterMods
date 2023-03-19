@@ -15,6 +15,7 @@ namespace MobileCrafter
         private static InputAction actionOpen;
         public static ConfigEntry<string> mobileCrafterKey;
         public static ConfigEntry<DataConfig.CraftableIn> mobileCrafterType;
+        public static ConfigEntry<DataConfig.CraftableIn> craftAtStationType;
         public static ConfigEntry<string> titleText;
         public static ConfigEntry<string> microchipText;
         
@@ -27,6 +28,7 @@ namespace MobileCrafter
         {
             mobileCrafterKey = Config.Bind<string>("Options", "MobileCrafterKey", "<Keyboard>/p", "Key binding to open the crafter");
             mobileCrafterType = Config.Bind<DataConfig.CraftableIn>("Options", "MobileCrafterType", DataConfig.CraftableIn.CraftStationT1, "Which crafter to base the mobile crafter on");
+            craftAtStationType = Config.Bind<DataConfig.CraftableIn>("Options", "CraftAtStationType", DataConfig.CraftableIn.CraftStationT3, "Which crafter to craft the mobile crafter in");
             titleText = Config.Bind<string>("Text", "TitleText", "Mobile Crafter", "UI Title text");
             microchipText = Config.Bind<string>("Text", "MicrochipText", "Microchip - Mobile Crafter", "Microchip text");
 
@@ -81,7 +83,7 @@ namespace MobileCrafter
                 groupDataItem.value = 50;
                 groupDataItem.craftableInList = new List<DataConfig.CraftableIn>
                 {
-                    DataConfig.CraftableIn.CraftStationT3
+                    craftAtStationType.Value
                 };
                 groupDataItem.equipableType = mobileC;
                 groupDataItem.usableType = 0;
