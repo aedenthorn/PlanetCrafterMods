@@ -11,7 +11,7 @@ using Debug = UnityEngine.Debug;
 
 namespace CraftFromContainers
 {
-    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.4.0")]
+    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.5.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -39,7 +39,7 @@ namespace CraftFromContainers
             isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
             pullFromChests = Config.Bind<bool>("Options", "PullFromChests", true, "Allow pulling from chests.");
             toggleKey = Config.Bind<string>("Options", "ToggleKey", "<Keyboard>/home", "Key to toggle pulling");
-            missingResources = Config.Bind<string>("Options", "MissingResources", "Missing Resources!", "Message to display if you move out of resource range while building.");
+            missingResources = Config.Bind<string>("Options", "MissingResources", "Missing Resources!", "Message to display if you move out of resource range while building. Set to empty to disable.");
             range = Config.Bind<float>("Options", "Range", 20f, "Pull range (m)");
 
             if (!toggleKey.Value.Contains("<"))
@@ -75,7 +75,7 @@ namespace CraftFromContainers
                 if(!__instance.GetComponent<PlayerBackpack>().GetInventory().ContainsItems(new List<Group>{ ___ghostGroupConstructible }) && !__instance.GetComponent<PlayerBackpack>().GetInventory().ContainsItems(___ghostGroupConstructible.GetRecipe().GetIngredientsGroupInRecipe()))
                 {
                     Dbgl("Resources missing! Cancelling build.");
-                    if (Managers.GetManager<PopupsHandler>() != null)
+                    if (!string.IsNullOrEmpty(missingResources.Value.Trim()) && Managers.GetManager<PopupsHandler>() != null)
                         AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new PopupData(___ghostGroupConstructible.GetImage(), missingResources.Value, 2));
                     Destroy(___ghost.gameObject);
                     ___ghost = null;
