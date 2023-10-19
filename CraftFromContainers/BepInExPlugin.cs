@@ -11,7 +11,7 @@ using Debug = UnityEngine.Debug;
 
 namespace CraftFromContainers
 {
-    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.5.0")]
+    [BepInPlugin("aedenthorn.CraftFromContainers", "Craft From Containers", "0.6.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -70,7 +70,7 @@ namespace CraftFromContainers
         {
             static bool Prefix(PlayerBuilder __instance, ref ConstructibleGhost ___ghost, float ___timeCreatedGhost, float ___timeCantBuildInterval, GroupConstructible ___ghostGroupConstructible)
             {
-                if (!modEnabled.Value || ___ghost is null || (Time.time < ___timeCreatedGhost + ___timeCantBuildInterval && !Managers.GetManager<PlayModeHandler>().GetIsFreePlay()))
+                if (!modEnabled.Value || ___ghost is null || (Time.time < ___timeCreatedGhost + ___timeCantBuildInterval && !Managers.GetManager<GameSettingsHandler>().GetCurrentGameSettings().GetFreeCraft()))
                     return true;
                 if(!__instance.GetComponent<PlayerBackpack>().GetInventory().ContainsItems(new List<Group>{ ___ghostGroupConstructible }) && !__instance.GetComponent<PlayerBackpack>().GetInventory().ContainsItems(___ghostGroupConstructible.GetRecipe().GetIngredientsGroupInRecipe()))
                 {

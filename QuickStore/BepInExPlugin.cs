@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 
 namespace QuickStore
 {
-    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.4.0")]
+    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.5.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -72,7 +72,7 @@ namespace QuickStore
         {
             List<string> allow = allowList.Value.Split(',').ToList();
             List<string> disallow = disallowList.Value.Split(',').ToList();
-            InventoryAssociated[] ial = FindObjectsOfType<InventoryAssociated>();
+            InventoryAssociated[] ial = FindObjectsByType<InventoryAssociated>(FindObjectsInactive.Exclude, FindObjectsSortMode.InstanceID);
             Vector3 pos = Managers.GetManager<PlayersManager>().GetActivePlayerController().transform.position;
 
             Dbgl($"got {ial.Length} inventories");
@@ -84,7 +84,7 @@ namespace QuickStore
             {
 
                 var dist = Vector3.Distance(ial[i].transform.position, pos);
-                if (dist > range.Value || (!ial[i].name.StartsWith("Container1") && !ial[i].name.StartsWith("Container2")) || (ial[i].name.StartsWith("Container1") && !allowStoreInChests.Value))
+                if (dist > range.Value || (!ial[i].name.StartsWith("Container1") && !ial[i].name.StartsWith("Container2") && !ial[i].name.StartsWith("Container3")) || (ial[i].name.StartsWith("Container1") && !allowStoreInChests.Value))
                     continue;
                 Inventory inventory = AccessTools.FieldRefAccess<InventoryAssociated, Inventory>(ial[i], "inventory");
 
@@ -105,7 +105,7 @@ namespace QuickStore
                         if (disallow.Contains(objects[j].GetGroup().GetId()))
                             continue;
                     }
-                    if (!inventory.IsFull() && inventory.GetInsideWorldObjects().Exists(o => o.GetGroup() == objects[j].GetGroup()))
+                    if (!inventory.IsFull() && (ial[i].GetComponent<WorldObjectText>()?.GetText() == Readable.GetGroupName(objects[j].GetGroup()) || inventory.GetInsideWorldObjects().Exists(o => o.GetGroup() == objects[j].GetGroup())))
                     {
                         Dbgl($"Storing {objects[j].GetGroup()} in {ial[i].name}");
                         if (inventory.AddItem(objects[j]))

@@ -15,7 +15,7 @@ using Image = UnityEngine.UI.Image;
 
 namespace StorageCustomization
 {
-    [BepInPlugin("aedenthorn.StorageCustomization", "Storage Customization", "0.5.0")]
+    [BepInPlugin("aedenthorn.StorageCustomization", "Storage Customization", "0.6.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -25,6 +25,7 @@ namespace StorageCustomization
         public static ConfigEntry<float> iconScale;
         public static ConfigEntry<int> chestStorageSize;
         public static ConfigEntry<int> lockerStorageSize;
+        public static ConfigEntry<int> locker2StorageSize;
         public static ConfigEntry<int> goldenChestStorageSize;
         public static ConfigEntry<int> waterCollectorStorageSize;
         public static ConfigEntry<int> backpack1Adds;
@@ -48,6 +49,7 @@ namespace StorageCustomization
             iconScale = Config.Bind<float>("Options", "IconScale", 1f, "Inventory icon scale");
             chestStorageSize = Config.Bind<int>("Options", "ChestStorageSize", 15, "Chest storage size");
             lockerStorageSize = Config.Bind<int>("Options", "LockerStorageSize", 35, "Locker storage size");
+            locker2StorageSize = Config.Bind<int>("Options", "Locker2StorageSize", 35, "Locker2 storage size");
             waterCollectorStorageSize = Config.Bind<int>("Options", "WaterCollectorStorageSize", 4, "Water Collector storage size");
             goldenChestStorageSize = Config.Bind<int>("Options", "GoldenChestStorageSize", 30, "Golden chest storage size");
             backpack1Adds = Config.Bind<int>("Options", "Backpack1Adds", 4, "Storage added by Backpack 1");
@@ -117,6 +119,10 @@ namespace StorageCustomization
                 else if (__instance.name.StartsWith("Container2"))
                 {
                     i.SetSize(lockerStorageSize.Value);
+                }
+                else if (__instance.name.StartsWith("Container3"))
+                {
+                    i.SetSize(locker2StorageSize.Value);
                 }
                 else if (__instance.name.StartsWith("GoldenContainer"))
                 {
