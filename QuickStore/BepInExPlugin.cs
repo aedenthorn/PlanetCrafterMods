@@ -23,6 +23,7 @@ namespace QuickStore
         private static ConfigEntry<string> allowList;
         private static ConfigEntry<string> disallowList;
         private static ConfigEntry<float> range;
+        private static ConfigEntry<bool> allowstoreIfContainerAlreadyContainsSameItem;
         private static ConfigEntry<bool> allowStoreIfContainerNameisexact;
         private static ConfigEntry<bool> allowStoreIfContainerNameContains;
         private static ConfigEntry<bool> requireNameFlagtoStore;
@@ -47,6 +48,7 @@ namespace QuickStore
             allowList = Config.Bind<string>("Options", "AllowList", "", "Comma-separated list of item IDs to allow storing (overrides DisallowList).");
             disallowList = Config.Bind<string>("Options", "DisallowList", "", "Comma-separated list of item IDs to disallow storing (if AllowList is empty)");
             range = Config.Bind<float>("Options", "Range", 20f, "Store range (m)");
+            allowstoreIfContainerAlreadyContainsSameItem = Config.Bind<bool>("Options", "allowstoreIfContainerAlreadyContainsSameItem", true, "Allows to Store Item to an Container when it already have the Same Item Type in it.");
             allowStoreIfContainerNameisexact = Config.Bind<bool>("Options", "allowStoreIfContainerNameisexact", true, "Allows to Store Item to an Container when it has the exact Name");
             allowStoreIfContainerNameContains = Config.Bind<bool>("Options", "allowStoreIfContainerNameContains", true, "Allows to Store Item to an Container when it just Contains the Name of the Contant");
             requireNameFlagtoStore = Config.Bind<bool>("Options", "requireNameFlagtoStore", false, "Requires a Nameflag beside the Object Name to Store stuff");
@@ -135,7 +137,7 @@ namespace QuickStore
                             }
                     }
 
-                    if (allownamedstore || inventory.GetInsideWorldObjects().Exists(o => o.GetGroup() == objects[j].GetGroup()) )
+                    if (allownamedstore || ( allowstoreIfContainerAlreadyContainsSameItem.Value && inventory.GetInsideWorldObjects().Exists(o => o.GetGroup() == objects[j].GetGroup()) ) )
                     {
                         Dbgl($"Storing {objects[j].GetGroup()} in {ial[i].name}");
                         if (inventory.AddItem(objects[j]))
