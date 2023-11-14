@@ -27,10 +27,9 @@ namespace QuickStore
         private static ConfigEntry<bool> storeIfContainerNameExact;
         private static ConfigEntry<bool> storeIfContainerNameContains;
         private static ConfigEntry<string> requireNameFlagtoStore;
+        private static ConfigEntry<bool> preventstoringsimilarnames;
 
         private static InputAction action;
-
-        private static bool skip;
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
@@ -51,7 +50,7 @@ namespace QuickStore
             storeIfContainerNameExact = Config.Bind<bool>("Options", "StoreIfContainerNameExact", true, "Store item in an container when the container has the exact name of the item.");
             storeIfContainerNameContains = Config.Bind<bool>("Options", "StoreIfContainerNameContains", true, "Store item in an container when the container name contains the name of the item.");
             requireNameFlagtoStore = Config.Bind<string>("Options", "requireNameFlagtoStore", "", "Require this tag in the container name to store item");
-
+            preventstoringsimilarnames = Config.Bind<bool>("Options", "preventstoringsimilarname", true, "Disables storing Item in Containers for Rods (Example Alloy stored in Alloy Rod). Same for Seeds and Crops (Example Beans in Beans Seed).");
 
             if (!storeKey.Value.Contains("<"))
                 storeKey.Value = "<Keyboard>/" + storeKey.Value;
@@ -125,7 +124,9 @@ namespace QuickStore
                     if (
                         (!storeIfContainerNameExact.Value || containerName != itemName) &&
                         (!storeIfContainerNameContains.Value || !containerName.Contains(itemName)) &&
-                        (!storeIfAlreadyContains.Value || !inventory.GetInsideWorldObjects().Exists(o => o.GetGroup() == objects[j].GetGroup()))
+                        (!storeIfAlreadyContains.Value || !inventory.GetInsideWorldObjects().Exists(o => o.GetGroup() == objects[j].GetGroup())) &&
+                        //Checks that Items are not stored to their Familiar Version for Rods or Seeds
+                        (preventstoringsimilarnames.Value && ( containerName.Contains(" Rod")&&!itemName.Contains(" Rod") || containerName.Contains(" Seeds")&&!itemName.Contains(" Seeds") ))
                         )
                         continue;
                     Dbgl($"Storing {objects[j].GetGroup()} in {ial[i].name}");
