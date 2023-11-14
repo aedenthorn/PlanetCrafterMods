@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 
 namespace QuickStore
 {
-    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.6.0")]
+    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.6.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -134,7 +134,7 @@ namespace QuickStore
                     {
                         informationsDisplayer.AddInformation(2f, Readable.GetGroupName(objects[j].GetGroup()), DataConfig.UiInformationsType.OutInventory, objects[j].GetGroup().GetImage());
                         Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory().RemoveItem(objects[j]);
-                        objects.RemoveAt(j);
+                        //objects.RemoveAt(j);
                     }
                 }
 
