@@ -129,7 +129,16 @@ namespace QuickStore
                         continue;
 
                     //Checks that Items are not stored to their Familiar Version for Rods or Seeds
-                    if (preventstoringsimilarnames.Value && ((containerName.Contains(" rod") && !itemName.Contains(" rod")) || (containerName.Contains(" seeds") && !itemName.Contains(" seeds")))) continue;
+                    if (preventstoringsimilarnames.Value && 
+                            (
+                                (containerName.Contains(" rod") &&!itemName.Contains(" rod")) || 
+                                (containerName.Contains(" seeds") && !itemName.Contains(" seeds")) ||
+                                (containerName.Contains(" t2") && !itemName.Contains(" t2")) ||
+                                (containerName.Contains(" t3") && !itemName.Contains(" t3")) ||
+                                (containerName.Contains(" t4") && !itemName.Contains(" t4"))
+                            )
+                        ) 
+                        continue;
 
                     Dbgl($"Storing {objects[j].GetGroup()} in {ial[i].name}");
                     if (inventory.AddItem(objects[j]))
