@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 
 namespace AutoMine
 {
-    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.6.0")]
+    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.7.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -90,7 +90,7 @@ namespace AutoMine
                 if (actionS.WasPressedThisFrame())
                 {
                     Dbgl($"Pressed specify key");
-                    PlayerAimController c = FindObjectOfType<PlayerAimController>();
+                    PlayerAimController c = FindAnyObjectByType<PlayerAimController>();
                     List<Actionnable> aimedActionnables = c.GetAimedActionnables();
                     if (aimedActionnables != null)
                     {
@@ -138,8 +138,16 @@ namespace AutoMine
                 return;
             InformationsDisplayer informationsDisplayer = Managers.GetManager<DisplayersHandler>().GetInformationsDisplayer();
             int count = 0;
-            foreach (var m in FindObjectsOfType<ActionMinable>())
+            var minable = FindObjectsByType<ActionMinable>(FindObjectsSortMode.None);
+            var grabbable = FindObjectsByType<ActionGrabable>(FindObjectsSortMode.None);
+            var l = new List<Actionnable>();
+            l.AddRange(minable);
+            l.AddRange(grabbable);
+            foreach (var m in l)
             {
+                if (m.GetComponentInParent<MachineAutoCrafter>() != null)
+                    continue;
+
                 Vector3 pos = player.transform.position;
                 var dist = Vector3.Distance(m.transform.position, pos);
                 if (dist > maxRange.Value)
