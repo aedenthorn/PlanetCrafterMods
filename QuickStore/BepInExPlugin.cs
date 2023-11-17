@@ -135,7 +135,9 @@ namespace QuickStore
                                 (containerName.Contains(" seeds") && !itemName.Contains(" seeds")) ||
                                 (containerName.Contains(" t2") && !itemName.Contains(" t2")) ||
                                 (containerName.Contains(" t3") && !itemName.Contains(" t3")) ||
-                                (containerName.Contains(" t4") && !itemName.Contains(" t4"))
+                                (containerName.Contains(" t4") && !itemName.Contains(" t4")) ||
+                                (containerName.Contains("uncommon") && !itemName.Contains("uncommon")) ||
+                                (containerName.Contains("worm") && !itemName.Contains("worm"))
                             )
                         ) 
                         continue;
