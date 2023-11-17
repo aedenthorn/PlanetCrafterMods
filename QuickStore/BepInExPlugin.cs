@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 
 namespace QuickStore
 {
-    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.6.1")]
+    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.6.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -27,10 +27,9 @@ namespace QuickStore
         private static ConfigEntry<bool> storeIfContainerNameExact;
         private static ConfigEntry<bool> storeIfContainerNameContains;
         private static ConfigEntry<string> requireNameFlagtoStore;
+        private static ConfigEntry<bool> preventstoringsimilarnames;
 
         private static InputAction action;
-
-        private static bool skip;
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
@@ -51,7 +50,7 @@ namespace QuickStore
             storeIfContainerNameExact = Config.Bind<bool>("Options", "StoreIfContainerNameExact", true, "Store item in an container when the container has the exact name of the item.");
             storeIfContainerNameContains = Config.Bind<bool>("Options", "StoreIfContainerNameContains", true, "Store item in an container when the container name contains the name of the item.");
             requireNameFlagtoStore = Config.Bind<string>("Options", "requireNameFlagtoStore", "", "Require this tag in the container name to store item");
-
+            preventstoringsimilarnames = Config.Bind<bool>("Options", "preventstoringsimilarnames", true, "Disables storing Item in Containers for Rods (Example Alloy stored in Alloy Rod). Same for Seeds and Crops (Example Beans in Beans Seed).");
 
             if (!storeKey.Value.Contains("<"))
                 storeKey.Value = "<Keyboard>/" + storeKey.Value;
@@ -128,6 +127,21 @@ namespace QuickStore
                         (!storeIfAlreadyContains.Value || !inventory.GetInsideWorldObjects().Exists(o => o.GetGroup() == objects[j].GetGroup()))
                         )
                         continue;
+
+                    //Checks that Items are not stored to their Familiar Version for Rods or Seeds
+                    if (preventstoringsimilarnames.Value && 
+                            (
+                                (containerName.Contains(" rod") &&!itemName.Contains(" rod")) || 
+                                (containerName.Contains(" seeds") && !itemName.Contains(" seeds")) ||
+                                (containerName.Contains(" t2") && !itemName.Contains(" t2")) ||
+                                (containerName.Contains(" t3") && !itemName.Contains(" t3")) ||
+                                (containerName.Contains(" t4") && !itemName.Contains(" t4")) ||
+                                (containerName.Contains("uncommon") && !itemName.Contains("uncommon")) ||
+                                (containerName.Contains("worm") && !itemName.Contains("worm"))
+                            )
+                        ) 
+                        continue;
+
                     Dbgl($"Storing {objects[j].GetGroup()} in {ial[i].name}");
                     if (inventory.AddItem(objects[j]))
                     {
