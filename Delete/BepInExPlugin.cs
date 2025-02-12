@@ -9,9 +9,9 @@ using System.Reflection;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace SpawnObject
+namespace Delete
 {
-    [BepInPlugin("aedenthorn.Delete", "Delete", "0.4.0")]
+    [BepInPlugin("aedenthorn.Delete", "Delete", "0.5.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -53,7 +53,7 @@ namespace SpawnObject
                     Dbgl("Pressed delete key");
                     var aimC = Managers.GetManager<PlayersManager>().GetActivePlayerController().GetAimController();
                     RaycastHit raycastHit;
-                    if (Physics.Raycast(aimC.GetAimRay(), out raycastHit, AccessTools.FieldRefAccess<PlayerAimController, float>(aimC, "distanceHitLimit"), AccessTools.FieldRefAccess<PlayerAimController, int>(aimC, "layerMask")))
+                    if (Physics.Raycast(aimC.GetAimRay(), out raycastHit, AccessTools.FieldRefAccess<PlayerAimController, float>(aimC, "_distanceHitLimit"), AccessTools.FieldRefAccess<PlayerAimController, int>(aimC, "_layerMask")))
                     {
                         Dbgl($"raycast hit {raycastHit.transform.name}");
 
@@ -72,16 +72,16 @@ namespace SpawnObject
                             if (t.GetComponent<WorldObjectAssociated>())
                             {
                                 Dbgl($"Destroying world object {t.name}");
-                                WorldObjectsHandler.DestroyWorldObject(t.GetComponent<WorldObjectAssociated>().GetWorldObject());
+                                WorldObjectsHandler.Instance.DestroyWorldObject(t.GetComponent<WorldObjectAssociated>().GetWorldObject());
                                 Destroy(t.gameObject);
-                                Managers.GetManager<DisplayersHandler>().GetItemWorldDislpayer().Hide();
+                                Managers.GetManager<DisplayersHandler>().GetItemWorldDisplayer().Hide();
                                 return;
                             }
                             t = t.parent;
                         }
                         Dbgl($"Destroying {raycastHit.transform.name}");
                         Destroy(raycastHit.transform.gameObject);
-                        Managers.GetManager<DisplayersHandler>().GetItemWorldDislpayer().Hide();
+                        Managers.GetManager<DisplayersHandler>().GetItemWorldDisplayer().Hide();
                     }
                 }
             }

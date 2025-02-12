@@ -39,7 +39,7 @@ namespace SpawnObject
             if (isDebug.Value)
                 context.Logger.Log(logLevel, str);
         }
-        private void Awake()
+        public void Awake()
         {
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
@@ -89,9 +89,9 @@ namespace SpawnObject
         }
 
         [HarmonyPatch(typeof(PlayerInputDispatcher), "Update")]
-        static class PlayerInputDispatcher_Update_Patch
+        public static class PlayerInputDispatcher_Update_Patch
         {
-            static void Postfix()
+            public static void Postfix()
             {
                 if (!modEnabled.Value)
                     return;
@@ -181,7 +181,7 @@ namespace SpawnObject
                                 {
                                     if (Keyboard.current.leftShiftKey.isPressed && !backpack.GetInventory().IsFull())
                                     {
-                                        backpack.GetInventory().AddItem(WorldObjectsHandler.CreateNewWorldObject(group));
+                                        backpack.GetInventory().AddItem(WorldObjectsHandler.Instance.CreateNewWorldObject(group));
                                     }
                                     else if(group is GroupConstructible)
                                     {
@@ -191,7 +191,7 @@ namespace SpawnObject
                                     }
                                     else
                                     {
-                                        WorldObjectsHandler.CreateAndDropOnFloor(group, aimray.GetPoint(0.7f));
+                                        WorldObjectsHandler.Instance.CreateAndDropOnFloor(group, aimray.GetPoint(0.7f));
                                     }
                                 }
                             }

@@ -13,7 +13,7 @@ using Image = UnityEngine.UI.Image;
 
 namespace StorageAnywhere
 {
-    [BepInPlugin("aedenthorn.StorageAnywhere", "Storage Anywhere", "0.3.1")]
+    [BepInPlugin("aedenthorn.StorageAnywhere", "Storage Anywhere", "0.4.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -214,8 +214,9 @@ namespace StorageAnywhere
                 }
                 dropDown.RefreshShownValue();
                 dropDown.onValueChanged.AddListener(ChangeInventory);
-
-                uiWindowContainer.SetInventories(Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory(), inventoryList[currentIndex].GetInventory(), false);
+                int _inventoryId = AccessTools.FieldRefAccess<InventoryAssociated, int>(inventoryList[currentIndex], "_inventoryId");
+                var inventory = InventoriesHandler.Instance.GetInventoryById(_inventoryId);
+                uiWindowContainer.SetInventories(Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory(), inventory, false);
             }
         }
 
@@ -266,9 +267,11 @@ namespace StorageAnywhere
             var ignores = ignoreTypes.Value.Split(',');
             for (int i = 0; i < ial.Length; i++)
             {
+                Inventory inventory = null;
                 try
                 {
-                    ial[i].GetInventory();
+                    int _inventoryId = AccessTools.FieldRefAccess<InventoryAssociated, int>(ial[i], "_inventoryId");
+                    inventory = InventoriesHandler.Instance.GetInventoryById(_inventoryId);
                 }
                 catch
                 {
@@ -283,7 +286,7 @@ namespace StorageAnywhere
                     continue;
                 }
 
-                if (ignoreSingleCell.Value && ial[i].GetInventory().GetSize() == 1)
+                if (ignoreSingleCell.Value && inventory.GetSize() == 1)
                 {
                     continue;
                 }
@@ -299,7 +302,7 @@ namespace StorageAnywhere
                     }
                 }
 
-                if (!ignore && ial[i].GetInventory() != Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory())
+                if (!ignore && inventory != Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory())
                     result.Add(ial[i]);
             }
             result.Sort(delegate (InventoryAssociated a, InventoryAssociated b) { return GetObjectName(a.gameObject).CompareTo(GetObjectName(b.gameObject)); });

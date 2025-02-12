@@ -45,6 +45,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomWeatherEvents", "Cust
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MobileCrafter", "MobileCrafter\MobileCrafter.csproj", "{E2443575-22FB-4334-AAD4-23733C8AD4B0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatCommands", "ChatCommands\ChatCommands.csproj", "{EA1A709F-6F23-48E1-ABF4-9C792BC566BC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResourceScan", "ResourceScan\ResourceScan.csproj", "{EB4CC90F-E8BD-4133-B773-FA54C45F9D46}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -135,6 +139,14 @@ Global
 		{E2443575-22FB-4334-AAD4-23733C8AD4B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E2443575-22FB-4334-AAD4-23733C8AD4B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E2443575-22FB-4334-AAD4-23733C8AD4B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA1A709F-6F23-48E1-ABF4-9C792BC566BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA1A709F-6F23-48E1-ABF4-9C792BC566BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA1A709F-6F23-48E1-ABF4-9C792BC566BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA1A709F-6F23-48E1-ABF4-9C792BC566BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB4CC90F-E8BD-4133-B773-FA54C45F9D46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB4CC90F-E8BD-4133-B773-FA54C45F9D46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB4CC90F-E8BD-4133-B773-FA54C45F9D46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB4CC90F-E8BD-4133-B773-FA54C45F9D46}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

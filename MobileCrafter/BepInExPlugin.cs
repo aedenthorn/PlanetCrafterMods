@@ -9,7 +9,7 @@ using UnityEngine.InputSystem;
 
 namespace MobileCrafter
 {
-    [BepInPlugin("MobileCrafter", "Mobile Crafter", "0.1.0")]
+    [BepInPlugin("MobileCrafter", "Mobile Crafter", "0.2.0")]
     public class mobileCrafter : BaseUnityPlugin
     {
         private static InputAction actionOpen;
@@ -50,7 +50,7 @@ namespace MobileCrafter
                 if (actionOpen.WasPressedThisFrame())
                 {
                     Debug.Log("pressed crafter key");
-                    if (MobileCrafterCanCraft || Managers.GetManager<PlayModeHandler>().GetFreeCraft())
+                    if (MobileCrafterCanCraft || Managers.GetManager<GameSettingsHandler>().GetCurrentGameSettings().GetFreeCraft())
                     {
                         UiWindowCraft uiWindowCraft = (UiWindowCraft)Managers.GetManager<WindowsHandler>().OpenAndReturnUi(DataConfig.UiType.Craft);
                         uiWindowCraft.SetCrafter(craftAction, true);
@@ -123,15 +123,15 @@ namespace MobileCrafter
             }
         }
 
-        [HarmonyPatch(typeof(PlayerEquipment), "UpdateAfterEquipmentChange")]
+        [HarmonyPatch(typeof(PlayerEquipment), nameof(PlayerEquipment.UpdateAfterEquipmentChange))]
         public static class PlayerEquipment_UpdateAfterEquipmentChange_Patch
         {
-            public static void Prefix(WorldObject _worldObject, bool _hasBeenAdded)
+            public static void Prefix(WorldObject worldObject, bool hasBeenAdded)
             {
-                GroupItem groupItem = (GroupItem)_worldObject.GetGroup();
+                GroupItem groupItem = (GroupItem)worldObject.GetGroup();
                 if (groupItem.GetEquipableType() == (DataConfig.EquipableType)420)
                 {
-                    MobileCrafterCanCraft = _hasBeenAdded;
+                    MobileCrafterCanCraft = hasBeenAdded;
                     Debug.Log($"Can craft: {MobileCrafterCanCraft}");
                 }
             }

@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 
 namespace AutoMine
 {
-    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.7.1")]
+    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.8.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -43,7 +43,7 @@ namespace AutoMine
         {
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
-            isDebug = Config.Bind<bool>("General", "IsDebug", true, "Enable debug logs");
+            isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
             intervalCheck = Config.Bind<bool>("Options", "IntervalCheck", true, "Enable interval checking");
             checkInterval = Config.Bind<float>("Options", "CheckInterval", 3f, "Seconds betweeen check");
             maxRange = Config.Bind<float>("Options", "MaxRange", 10f, "Range to check in meters");
@@ -130,7 +130,6 @@ namespace AutoMine
         {
             if (!Managers.GetManager<PlayersManager>() || Managers.GetManager<WindowsHandler>().GetHasUiOpen())
                 return;
-
             List<string> allow = allowList.Value.Split(',').ToList();
             List<string> disallow = disallowList.Value.Split(',').ToList();
             var player = Managers.GetManager<PlayersManager>().GetActivePlayerController();
@@ -182,7 +181,7 @@ namespace AutoMine
                     Destroy(m.gameObject);
                     informationsDisplayer.AddInformation(2f, Readable.GetGroupName(worldObject.GetGroup()), DataConfig.UiInformationsType.InInventory, worldObject.GetGroup().GetImage());
                     worldObject.SetDontSaveMe(false);
-                    Managers.GetManager<DisplayersHandler>().GetItemWorldDislpayer().Hide();
+                    Managers.GetManager<DisplayersHandler>().GetItemWorldDisplayer().Hide();
                     count++;
                 }
                 else

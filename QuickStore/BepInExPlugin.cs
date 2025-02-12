@@ -4,6 +4,7 @@ using BepInEx.Logging;
 using HarmonyLib;
 using SpaceCraft;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -11,7 +12,7 @@ using UnityEngine.InputSystem;
 
 namespace QuickStore
 {
-    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.6.1")]
+    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.7.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -30,7 +31,6 @@ namespace QuickStore
 
         private static InputAction action;
 
-        private static bool skip;
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
@@ -86,7 +86,7 @@ namespace QuickStore
 
             Dbgl($"got {ial.Length} inventories");
 
-            List<WorldObject> objects = Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory().GetInsideWorldObjects();
+            ReadOnlyCollection<WorldObject> objects = Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory().GetInsideWorldObjects();
 
             InformationsDisplayer informationsDisplayer = Managers.GetManager<DisplayersHandler>().GetInformationsDisplayer();
             for (int i = 0; i < ial.Length; i++)
@@ -95,11 +95,13 @@ namespace QuickStore
                 var dist = Vector3.Distance(ial[i].transform.position, pos);
                 if (dist > range.Value || (!ial[i].name.StartsWith("Container1") && !ial[i].name.StartsWith("Container2") && !ial[i].name.StartsWith("Container3")) || (ial[i].name.StartsWith("Container1") && !allowStoreInChests.Value))
                     continue;
-                Inventory inventory = AccessTools.FieldRefAccess<InventoryAssociated, Inventory>(ial[i], "inventory");
+                
+                int _inventoryId = AccessTools.FieldRefAccess<InventoryAssociated, int>(ial[i], "_inventoryId");
+                var inventory = InventoriesHandler.Instance.GetInventoryById(_inventoryId);
 
                 if (inventory is null || inventory == Managers.GetManager<PlayersManager>().GetActivePlayerController().GetPlayerBackpack().GetInventory() || inventory.IsFull())
                     continue;
-
+                var objList = inventory.GetInsideWorldObjects().ToList();
                 Dbgl($"checking close inventory {ial[i].name}: {ial[i].transform.position}, {pos}: {dist}m");
 
                 if (!string.IsNullOrEmpty(requireNameFlagtoStore.Value) && !ial[i].GetComponent<WorldObjectText>().GetText().ToLower().Contains($"{requireNameFlagtoStore.Value}"))
@@ -125,7 +127,7 @@ namespace QuickStore
                     if (
                         (!storeIfContainerNameExact.Value || containerName != itemName) &&
                         (!storeIfContainerNameContains.Value || !containerName.Contains(itemName)) &&
-                        (!storeIfAlreadyContains.Value || !inventory.GetInsideWorldObjects().Exists(o => o.GetGroup() == objects[j].GetGroup()))
+                        (!storeIfAlreadyContains.Value || !objList.Exists(o => o.GetGroup() == objects[j].GetGroup()))
                         )
                         continue;
                     Dbgl($"Storing {objects[j].GetGroup()} in {ial[i].name}");
