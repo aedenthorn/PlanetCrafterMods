@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace ShowNextUnlockableGoal
 {
-    [BepInPlugin("aedenthorn.ShowNextUnlockableGoal", "Show Next Unlockable Goal", "0.2.0")]
+    [BepInPlugin("aedenthorn.ShowNextUnlockableGoal", "Show Next Unlockable Goal", "0.2.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -37,7 +37,8 @@ namespace ShowNextUnlockableGoal
             Dbgl("Plugin awake");
             var harmony = new Harmony(MetadataHelper.GetMetadata(this).GUID);
             harmony.PatchAll();
-            foreach (var type in typeof(WorldUnitsDisplayer).Assembly.GetTypes())
+            var types = typeof(WorldUnitsDisplayer).Assembly.GetTypes();
+            foreach (var type in types)
             {
                 if (type.FullName.StartsWith("SpaceCraft.WorldUnitsDisplayer+<RefreshDisplay>"))
                 {
@@ -98,7 +99,7 @@ namespace ShowNextUnlockableGoal
         private static string GetValueString(string str, WorldUnit unit)
         {
             var unitType = unit.GetUnitType();
-            float next = float.MaxValue;
+            double next = double.MaxValue;
             foreach (Group group in Managers.GetManager<UnlockingHandler>().GetUnlockableGroupsOverUnit(unitType))
             {
                 if (group is null)
@@ -112,7 +113,7 @@ namespace ShowNextUnlockableGoal
                     next = unlockingInfos.GetUnlockingValue();
                 }
             }
-            if (next < float.MaxValue)
+            if (next < double.MaxValue)
             {
                 str += " " + string.Format(nextString.Value, unit.GetDisplayStringForValue(next));
             }

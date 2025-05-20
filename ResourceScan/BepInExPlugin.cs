@@ -19,19 +19,20 @@ namespace ResourceScan
 
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> isDebug;
-        public static ConfigEntry<bool> intervalCheck;
+        public static ConfigEntry<bool> scanEnabled;
+        public static ConfigEntry<string> toggleScanKey;
+        public static ConfigEntry<string> toggleResourceKey;
         public static ConfigEntry<float> checkInterval;
+        public static ConfigEntry<float> minRange;
         public static ConfigEntry<float> maxRange;
         public static ConfigEntry<string> allowList;
         public static ConfigEntry<string> disallowList;
 
-        public static string specifiedID;
 
         public static float elapsed;
 
         public static InputAction action;
-        public static InputAction actionM;
-        public static InputAction actionS;
+        public static InputAction action2;
         public static List<GameObject> hoveringList = new List<GameObject>();
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
@@ -44,11 +45,20 @@ namespace ResourceScan
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
-            intervalCheck = Config.Bind<bool>("Options", "IntervalCheck", true, "Enable interval checking");
+            toggleScanKey = Config.Bind<string>("Options", "ToggleScanKey", "<Keyboard>/pageUp", "Key used to toggle the scan");
+            toggleResourceKey = Config.Bind<string>("Options", "ToggleResourceKey", "<Keyboard>/pageDown", "Key used to toggle the scan");
+            scanEnabled = Config.Bind<bool>("Options", "ScanEnabled", true, "Enable this mod");
             checkInterval = Config.Bind<float>("Options", "CheckInterval", 3f, "Seconds betweeen check");
-            maxRange = Config.Bind<float>("Options", "MaxRange", 10f, "Range to check in meters");
+            minRange = Config.Bind<float>("Options", "MinRange", 20f, "Min range to check in meters");
+            maxRange = Config.Bind<float>("Options", "MaxRange", 100f, "Max range to check in meters");
             allowList = Config.Bind<string>("Options", "AllowList", "", "Comma-separated list of item IDs to allow mining (overrides DisallowList).");
             disallowList = Config.Bind<string>("Options", "DisallowList", "", "Comma-separated list of item IDs to disallow mining (if AllowList is empty)");
+            
+            action = new InputAction(binding: toggleScanKey.Value);
+            action.Enable();
+
+            action2 = new InputAction(binding: toggleResourceKey.Value);
+            action2.Enable();
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
             Dbgl("Plugin awake");
@@ -76,8 +86,55 @@ namespace ResourceScan
                     }
                     return;
                 }
+                if (action.WasPressedThisFrame())
+                {
+                    scanEnabled.Value = !scanEnabled.Value;
+                    Dbgl($"Scan enabled: {scanEnabled.Value}");
+                    elapsed = checkInterval.Value;
+                }
+                else if (action2.WasPressedThisFrame())
+                {
+                    Dbgl($"Pressed specify key");
+                    PlayerAimController c = FindAnyObjectByType<PlayerAimController>();
+                    List<Actionnable> aimedActionnables = c.GetAimedActionnables();
+                    if (aimedActionnables != null)
+                    {
+                        foreach (Actionnable actionnable in aimedActionnables)
+                        {
+                            if (actionnable is ActionMinable)
+                            {
+                                var wo = actionnable.GetComponent<WorldObjectAssociated>();
+                                if (wo is null)
+                                    continue;
+                                var id = wo.GetWorldObject().GetGroup().GetId();
+                                var allowed = allowList.Value.Split(',').ToList();
+                                if (allowed.Contains(id))
+                                {
+                                    allowed.Remove(id);
+                                    Dbgl($"removed {id} from list");
+                                }
+                                else
+                                {
+                                    allowed.Add(id);
+                                    Dbgl($"added {id} to list");
+                                }
+                                allowList.Value = string.Join(",", allowed);
+                                elapsed = checkInterval.Value;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!scanEnabled.Value)
+                {
+                    if (hoveringList.Count > 0)
+                    {
+                        ClearHovering();
+                    }
+                    return;
+                }
                 elapsed += Time.deltaTime;
-                if (elapsed > checkInterval.Value)
+                if (elapsed >= checkInterval.Value)
                 {
                     elapsed = 0;
                     CheckForNearbyMinables();
@@ -103,8 +160,8 @@ namespace ResourceScan
 
                 Vector3 pos = player.transform.position;
                 var dist = Vector3.Distance(m.transform.position, pos);
-                if (dist > maxRange.Value)
-                    continue;
+                if (dist > maxRange.Value || dist < minRange.Value)
+                    continue; 
 
                 var worldObjectAssociated = m.GetComponent<WorldObjectAssociated>();
                 if (worldObjectAssociated == null)
@@ -113,11 +170,6 @@ namespace ResourceScan
                 WorldObject worldObject = worldObjectAssociated.GetWorldObject();
 
                 string id = worldObject.GetGroup().GetId();
-
-                if (specifiedID != null && id != specifiedID)
-                {
-                    continue;
-                }
 
                 if (allowList.Value.Length > 0)
                 {
@@ -130,10 +182,8 @@ namespace ResourceScan
                         continue;
                 }
                 WorldObjectAssociated component = m.GetComponent<WorldObjectAssociated>();
-                Dbgl($"component: {template != null}");
 
                 string groupName = Readable.GetGroupName(component.GetWorldObject().GetGroup());
-                Dbgl($"group name: {groupName}");
 
                 GameObject go = Instantiate(template.gameObject, template.transform.parent);
                 go.GetComponentInChildren<ItemWorldDislpayer>().ShowTo(groupName, m.transform.position, Managers.GetManager<PlayersManager>().GetActivePlayerController().gameObject);

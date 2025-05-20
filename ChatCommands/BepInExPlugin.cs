@@ -129,7 +129,7 @@ namespace ChatCommands
             {
                 if (!modEnabled.Value)
                     return;
-                var groups = GroupsHandler.GetAllGroups(false);
+                var groups = GroupsHandler.GetAllGroups();
                 if (groups == null)
                     return;
                 objectNames = groups.Select(g => g.GetId());

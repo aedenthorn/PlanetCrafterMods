@@ -72,14 +72,15 @@ namespace CraftFromContainers
         {
             static bool Prefix(PlayerBuilder __instance, ref ConstructibleGhost ____ghost, float ____timeCreatedGhost, float ____timeCantBuildInterval, GroupConstructible ____ghostGroupConstructible)
             {
-                if (!modEnabled.Value || ____ghost is null || (Time.time < ____timeCreatedGhost + ____timeCantBuildInterval && !Managers.GetManager<GameSettingsHandler>().GetCurrentGameSettings().GetFreeCraft()))
+                if (!modEnabled.Value || ____ghost == null || (Time.time < ____timeCreatedGhost + ____timeCantBuildInterval && !Managers.GetManager<GameSettingsHandler>().GetCurrentGameSettings().GetFreeCraft()))
                     return true;
                 if(!__instance.GetComponent<PlayerBackpack>().GetInventory().ContainsItems(new List<Group>{ ____ghostGroupConstructible }) && !__instance.GetComponent<PlayerBackpack>().GetInventory().ContainsItems(____ghostGroupConstructible.GetRecipe().GetIngredientsGroupInRecipe()))
                 {
                     Dbgl("Resources missing! Cancelling build.");
                     if (!string.IsNullOrEmpty(missingResources.Value.Trim()) && Managers.GetManager<PopupsHandler>() != null)
                         AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new PopupData(____ghostGroupConstructible.GetImage(), missingResources.Value, 2));
-                    Destroy(____ghost.gameObject);
+                    if(____ghost != null)
+                        Destroy(____ghost.gameObject);
                     ____ghost = null;
                     return false;
                 }

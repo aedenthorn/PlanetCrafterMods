@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 
 namespace AutoMine
 {
-    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.8.0")]
+    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.8.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -19,6 +19,7 @@ namespace AutoMine
         private static ConfigEntry<bool> modEnabled;
         private static ConfigEntry<bool> isDebug;
         private static ConfigEntry<bool> intervalCheck;
+        private static ConfigEntry<bool> includeGrabbables;
         private static ConfigEntry<string> checkToggleKey;
         private static ConfigEntry<string> checkKey;
         private static ConfigEntry<string> specifyKey;
@@ -39,13 +40,14 @@ namespace AutoMine
             if (isDebug.Value)
                 context.Logger.Log(logLevel, str);
         }
-        private void Awake()
+        public void Awake()
         {
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
             intervalCheck = Config.Bind<bool>("Options", "IntervalCheck", true, "Enable interval checking");
             checkInterval = Config.Bind<float>("Options", "CheckInterval", 3f, "Seconds betweeen check");
+            includeGrabbables = Config.Bind<bool>("Options", "IncludeGrabbables", false, "Enable grabbing grabbables");
             maxRange = Config.Bind<float>("Options", "MaxRange", 10f, "Range to check in meters");
             checkToggleKey = Config.Bind<string>("Options", "IntervalCheckKey", "<Keyboard>/v", "Key to enable / disable interval checking");
             checkKey = Config.Bind<string>("Options", "CheckKey", "<Keyboard>/c", "Key to check manually");
@@ -65,9 +67,9 @@ namespace AutoMine
         }
 
         [HarmonyPatch(typeof(PlayerInputDispatcher), "Update")]
-        static class PlayerInputDispatcher_Update_Patch
+        public static class PlayerInputDispatcher_Update_Patch
         {
-            static void Postfix()
+            public static void Postfix()
             {
                 if (!modEnabled.Value)
                     return;
@@ -133,15 +135,17 @@ namespace AutoMine
             List<string> allow = allowList.Value.Split(',').ToList();
             List<string> disallow = disallowList.Value.Split(',').ToList();
             var player = Managers.GetManager<PlayersManager>().GetActivePlayerController();
-            if (player.GetPlayerBackpack().GetInventory().IsFull())
+            
+            if (player?.GetPlayerBackpack()?.GetInventory()?.IsFull() != false)
                 return;
             InformationsDisplayer informationsDisplayer = Managers.GetManager<DisplayersHandler>().GetInformationsDisplayer();
             int count = 0;
-            var minable = FindObjectsByType<ActionMinable>(FindObjectsSortMode.None);
-            var grabbable = FindObjectsByType<ActionGrabable>(FindObjectsSortMode.None);
             var l = new List<Actionnable>();
-            l.AddRange(minable);
-            l.AddRange(grabbable);
+            l.AddRange(FindObjectsByType<ActionMinable>(FindObjectsSortMode.None));
+            if (includeGrabbables.Value)
+            {
+                l.AddRange(FindObjectsByType<ActionGrabable>(FindObjectsSortMode.None));
+            }
             foreach (var m in l)
             {
                 if (m.GetComponentInParent<MachineAutoCrafter>() != null)
@@ -157,7 +161,8 @@ namespace AutoMine
                     continue;
 
                 WorldObject worldObject = worldObjectAssociated.GetWorldObject();
-
+                if (worldObject == null)
+                    continue;
                 string id = worldObject.GetGroup().GetId();
 
                 if (specifiedID != null && id != specifiedID)
@@ -178,10 +183,13 @@ namespace AutoMine
 
                 if (player.GetPlayerBackpack().GetInventory().AddItem(worldObject))
                 {
+                    var name = Readable.GetGroupName(worldObject.GetGroup());
+                    Dbgl($"mined {name}");
+
                     Destroy(m.gameObject);
-                    informationsDisplayer.AddInformation(2f, Readable.GetGroupName(worldObject.GetGroup()), DataConfig.UiInformationsType.InInventory, worldObject.GetGroup().GetImage());
+                    informationsDisplayer.AddInformation(2f, name, DataConfig.UiInformationsType.InInventory, worldObject.GetGroup().GetImage());
                     worldObject.SetDontSaveMe(false);
-                    Managers.GetManager<DisplayersHandler>().GetItemWorldDisplayer().Hide();
+                    Managers.GetManager<DisplayersHandler>().GetItemWorldDisplayer()?.Hide();
                     count++;
                 }
                 else
