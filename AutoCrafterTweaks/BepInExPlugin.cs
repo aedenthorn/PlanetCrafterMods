@@ -8,7 +8,7 @@ using System.Reflection;
 
 namespace AutoCrafterTweaks
 {
-    [BepInPlugin("aedenthorn.AutoCrafterTweaks", "Auto Crafter Tweaks", "0.1.0")]
+    [BepInPlugin("aedenthorn.AutoCrafterTweaks", "Auto Crafter Tweaks", "0.1.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -53,13 +53,13 @@ namespace AutoCrafterTweaks
         {
             if (!modEnabled.Value)
                 return;
-            foreach(var m in FindObjectsOfType<MachineAutoCrafter>())
+            foreach(var m in FindObjectsByType(typeof(MachineAutoCrafter), UnityEngine.FindObjectsSortMode.None))
             {
-                SetValues(m);
+                SetValues((MachineAutoCrafter)m);
             }
         }
 
-        [HarmonyPatch(typeof(MachineAutoCrafter), "Start")]
+        [HarmonyPatch(typeof(MachineAutoCrafter), "Awake")]
         private static class MachineAutoCrafter_Start_Patch
         {
             static void Prefix(MachineAutoCrafter __instance)
