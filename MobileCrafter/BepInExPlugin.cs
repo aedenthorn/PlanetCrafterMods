@@ -9,10 +9,11 @@ using UnityEngine.InputSystem;
 
 namespace MobileCrafter
 {
-    [BepInPlugin("MobileCrafter", "Mobile Crafter", "0.2.0")]
+    [BepInPlugin("MobileCrafter", "Mobile Crafter", "0.3.0")]
     public class mobileCrafter : BaseUnityPlugin
     {
         private static InputAction actionOpen;
+        private static mobileCrafter context;
         public static ConfigEntry<string> mobileCrafterKey;
         public static ConfigEntry<DataConfig.CraftableIn> mobileCrafterType;
         public static ConfigEntry<DataConfig.CraftableIn> craftAtStationType;
@@ -26,6 +27,7 @@ namespace MobileCrafter
 
         private void Awake()
         {
+            context = this;
             mobileCrafterKey = Config.Bind<string>("Options", "MobileCrafterKey", "<Keyboard>/p", "Key binding to open the crafter");
             mobileCrafterType = Config.Bind<DataConfig.CraftableIn>("Options", "MobileCrafterType", DataConfig.CraftableIn.CraftStationT1, "Which crafter to base the mobile crafter on");
             craftAtStationType = Config.Bind<DataConfig.CraftableIn>("Options", "CraftAtStationType", DataConfig.CraftableIn.CraftStationT3, "Which crafter to craft the mobile crafter in");
@@ -49,13 +51,13 @@ namespace MobileCrafter
             {
                 if (actionOpen.WasPressedThisFrame())
                 {
-                    Debug.Log("pressed crafter key");
+                    context.Logger.LogInfo("pressed crafter key");
                     if (MobileCrafterCanCraft || Managers.GetManager<GameSettingsHandler>().GetCurrentGameSettings().GetFreeCraft())
                     {
                         UiWindowCraft uiWindowCraft = (UiWindowCraft)Managers.GetManager<WindowsHandler>().OpenAndReturnUi(DataConfig.UiType.Craft);
                         uiWindowCraft.SetCrafter(craftAction, true);
                         uiWindowCraft.ChangeTitle(titleText.Value);
-                        Debug.Log("opening crafter");
+                        context.Logger.LogInfo("opening crafter");
                     }
                 }
             }
@@ -78,6 +80,8 @@ namespace MobileCrafter
                 groupDataItem.icon = groupData.icon;
                 groupDataItem.unlockingWorldUnit = DataConfig.WorldUnitType.Terraformation;
                 groupDataItem.unlockingValue = 0f;
+                groupDataItem.unlockInPlanets = GetGroupDataItemById(___groupsData, "MultiToolMineSpeed4").unlockInPlanets;
+                groupDataItem.planetUsageType = DataConfig.GroupPlanetUsageType.CanBeUsedOnAllPlanets;
                 groupDataItem.terraformStageUnlock = null;
                 groupDataItem.inventorySize = 0;
                 groupDataItem.value = 50;
@@ -103,8 +107,9 @@ namespace MobileCrafter
                     GetGroupDataItemById(___groupsData, "Iron"),
                     GetGroupDataItemById(___groupsData, "Silicon")
                 };
+
                 ___groupsData.Add(groupDataItem);
-                Debug.Log("Added crafter to data");
+                context.Logger.LogInfo("Added crafter to data");
                 hasBeenAdded = true;
 
             }
@@ -132,7 +137,7 @@ namespace MobileCrafter
                 if (groupItem.GetEquipableType() == (DataConfig.EquipableType)420)
                 {
                     MobileCrafterCanCraft = hasBeenAdded;
-                    Debug.Log($"Can craft: {MobileCrafterCanCraft}");
+                    context.Logger.LogInfo($"Can craft: {MobileCrafterCanCraft}");
                 }
             }
         }
