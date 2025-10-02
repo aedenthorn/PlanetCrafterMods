@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 
 namespace AutoMine
 {
-    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.8.1")]
+    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.8.3")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -140,6 +140,7 @@ namespace AutoMine
                 return;
             InformationsDisplayer informationsDisplayer = Managers.GetManager<DisplayersHandler>().GetInformationsDisplayer();
             int count = 0;
+            int count2 = 0;
             var l = new List<Actionnable>();
             l.AddRange(FindObjectsByType<ActionMinable>(FindObjectsSortMode.None));
             if (includeGrabbables.Value)
@@ -148,6 +149,10 @@ namespace AutoMine
             }
             foreach (var m in l)
             {
+                if (player.GetPlayerBackpack().GetInventory().IsFull())
+                    break;
+                if(m is ActionGrabable g && !g.GetCanGrab())
+                    { continue; }
                 if (m.GetComponentInParent<MachineAutoCrafter>() != null)
                     continue;
 
@@ -180,27 +185,32 @@ namespace AutoMine
                     if (disallow.Contains(id))
                         continue;
                 }
-
-                if (player.GetPlayerBackpack().GetInventory().AddItem(worldObject))
+                var name = Readable.GetGroupName(worldObject.GetGroup());
+                if (m is ActionGrabable g2)
                 {
-                    var name = Readable.GetGroupName(worldObject.GetGroup());
-                    Dbgl($"mined {name}");
-
+                    AccessTools.Method(typeof(ActionGrabable), "Grab").Invoke(g2, new object[0]);
+                    informationsDisplayer.AddInformation(2f, name, DataConfig.UiInformationsType.InInventory, worldObject.GetGroup().GetImage());
+                    count2++;
+                    Dbgl($"grabbed {name}");
+                }
+                else if (player.GetPlayerBackpack().GetInventory().AddItem(worldObject))
+                {
                     Destroy(m.gameObject);
                     informationsDisplayer.AddInformation(2f, name, DataConfig.UiInformationsType.InInventory, worldObject.GetGroup().GetImage());
                     worldObject.SetDontSaveMe(false);
                     Managers.GetManager<DisplayersHandler>().GetItemWorldDisplayer()?.Hide();
                     count++;
+                    Dbgl($"mined {name}");
                 }
                 else
                 {
                     break;
                 }
             }
-            if (count > 0)
+            if (count > 0 || count2 > 0)
             {
                 player.GetPlayerAudio().PlayGrab();
-                Dbgl($"Mined {count} items");
+                Dbgl($"Mined {count} items, grabbed {count2} items");
             }
         }
 

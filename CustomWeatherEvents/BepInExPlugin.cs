@@ -13,7 +13,7 @@ using Random = UnityEngine.Random;
 
 namespace CustomWeatherEvents
 {
-    [BepInPlugin("aedenthorn.CustomWeatherEvents", "Custom Weather Events", "0.1.1")]
+    [BepInPlugin("aedenthorn.CustomWeatherEvents", "Custom Weather Events", "0.2.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -126,7 +126,7 @@ namespace CustomWeatherEvents
                             if (worldUnitsHandler.IsWorldValuesAreBetweenStages(kvp.Value.GetMeteoStartTerraformStage(), kvp.Value.GetMeteoStopTerraformStage()))
                             {
                                 Dbgl($"Launching: {kvp.Value.name}");
-                                __instance.LaunchSpecificMeteoEvent(kvp.Value);
+                                __instance.LaunchSpecificMeteoEvent(kvp.Value, null);
                                 return false;
                             }
                             break;
@@ -160,7 +160,11 @@ namespace CustomWeatherEvents
                     var list = GroupsHandler.GetAllGroups().Where(g => g is GroupItem).Select(g => $"{Readable.GetGroupName(g)}: {g.GetId()}").ToList();
                     list.Sort();
                     File.WriteAllLines(Path.Combine(AedenthornUtils.GetAssetPath(context, true), "groups.txt"), list);
-                    list = Managers.GetManager<TerraformStagesHandler>().GetAllTerraGlobalStages().Select(t => t.GetTerraId()).ToList();
+                    list = new List<string>();
+                    foreach(var p in Managers.GetManager<PlanetLoader>().planetList.GetPlanetList())
+                    {
+                        list.AddRange(p.GetPlanetTerraformationStages().Select(st => st.GetTerraId()));
+                    }
                     File.WriteAllLines(Path.Combine(AedenthornUtils.GetAssetPath(context, true), "terraform_stages.txt"), list);
                 }
 
@@ -169,7 +173,7 @@ namespace CustomWeatherEvents
                 string filePath = Path.Combine(AedenthornUtils.GetAssetPath(context, true), "event_types.json");
                 meteoEventDict =  File.Exists(filePath) ? JsonSerializer.Deserialize<WeatherDataDict>(File.ReadAllText(filePath)) : new WeatherDataDict();
                 List<GroupData> groupsData = (List<GroupData>)AccessTools.Field(typeof(StaticDataHandler), "groupsData").GetValue(AccessTools.Field(typeof(StaticDataHandler), "Instance").GetValue(null));
-                MeteoSendInSpace s = FindObjectOfType<MeteoSendInSpace>();
+                MeteoSendInSpace s = FindFirstObjectByType<MeteoSendInSpace>();
                 for (int i = 0; i < ___meteoEvents.Count; i++)
                 {
 
@@ -221,8 +225,23 @@ namespace CustomWeatherEvents
             m.duration = d.duration;
             m.rainEmission = d.rainEmission;
             m.wetness = d.wetness;
-            m.startTerraformStage = d.startTerraformStage is null ? null : Managers.GetManager<TerraformStagesHandler>().GetAllTerraGlobalStages().Find(t => t.GetTerraId() == d.startTerraformStage);
-            m.stopTerraformStage = d.stopTerraformStage is null ? null : Managers.GetManager<TerraformStagesHandler>().GetAllTerraGlobalStages().Find(t => t.GetTerraId() == d.stopTerraformStage);
+            m.startTerraformStage = null;
+            m.stopTerraformStage = null;
+            foreach (var p in Managers.GetManager<PlanetLoader>().planetList.GetPlanetList())
+            {
+                foreach(var st in p.GetPlanetTerraformationStages())
+                {
+                    if(st.GetTerraId() == d.startTerraformStage)
+                    {
+                        m.startTerraformStage = st;
+                    }
+                    if(st.GetTerraId() == d.stopTerraformStage)
+                    {
+                        m.stopTerraformStage = st;
+                    }
+                }
+            }
+
 
             if (d.asteroidEventData is null)
             {

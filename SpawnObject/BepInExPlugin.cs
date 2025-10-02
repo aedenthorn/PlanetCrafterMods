@@ -16,7 +16,7 @@ using UnityEngine.UI;
 
 namespace SpawnObject
 {
-    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.6.0")]
+    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.7.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -91,17 +91,19 @@ namespace SpawnObject
         [HarmonyPatch(typeof(PlayerInputDispatcher), "Update")]
         public static class PlayerInputDispatcher_Update_Patch
         {
-            public static void Postfix()
+            public static void Postfix(PlayerInputDispatcher __instance)
             {
                 if (!modEnabled.Value)
                     return;
 
                 if (Managers.GetManager<WindowsHandler>()?.GetHasUiOpen() != true && inputObject != null)
                 {
-                    Dbgl($"ui open");
-
+                    Dbgl($"ui open, closing");
+                    UiWindowTextInput templateWindow = (UiWindowTextInput)Managers.GetManager<WindowsHandler>().OpenAndReturnUi(DataConfig.UiType.TextInput);
+                    inputObject.GetComponent<UiWindowTextInput>().OnClose();
                     Destroy(inputObject);
                     inputObject = null;
+                    Managers.GetManager<WindowsHandler>().CloseAllWindows();
                     return;
                 }
                 if (modEnabled.Value && action.WasPressedThisFrame())
@@ -112,20 +114,27 @@ namespace SpawnObject
                     {
                         if (inputObject != null)
                         {
+                            Managers.GetManager<WindowsHandler>().OpenAndReturnUi(DataConfig.UiType.TextInput);
+
+                            inputObject.GetComponent<UiWindowTextInput>().OnClose();
                             Destroy(inputObject);
                             inputObject = null;
                             Managers.GetManager<WindowsHandler>().CloseAllWindows();
                         }
                         return;
                     }
-
+                    if ((bool)AccessTools.Method(typeof(PlayerInputDispatcher), "IsTyping").Invoke(__instance, new object[0]))
+                        return;
                     if (objectNames is null)
                     {
+
                         objectNames = GroupsHandler.GetAllGroups().Select(g => g.GetId());
                         Dbgl($"Got {objectNames.Count()} objects");
 
                         if (dumpItems.Value)
                         {
+                            Dbgl($"Dumping items");
+
                             dumpItems.Value = false;
                             List<string> list = new List<string>();
                             foreach (var group in GroupsHandler.GetAllGroups())
@@ -136,25 +145,26 @@ namespace SpawnObject
                             File.WriteAllLines(Path.Combine(AedenthornUtils.GetAssetPath(context, true), "items.txt"), list);
                         }
                     }
+
                     Dbgl("Creating input object");
-                    UiWindowTextInput templateWindow = (UiWindowTextInput)Managers.GetManager<WindowsHandler>().GetWindowViaUiId(DataConfig.UiType.TextInput);
+                    UiWindowTextInput templateWindow = (UiWindowTextInput)Managers.GetManager<WindowsHandler>().OpenAndReturnUi(DataConfig.UiType.TextInput);
+                    if (templateWindow == null)
+                    {
+                        Dbgl("missing template window");
+                        return;
+                    }
                     inputObject = Instantiate(templateWindow.gameObject, templateWindow.transform.parent);
+                    inputObject.SetActive(true);
+                    templateWindow.gameObject.SetActive(false);
                     inputObject.name = "Spawn Item Window";
                     inputObject.transform.GetChild(0).GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 300);
                     Destroy(inputObject.GetComponentInChildren<TextMeshProUGUI>().gameObject);
-                    Button goButton = inputObject.GetComponentInChildren<Button>();
-                    foreach (Transform t in goButton.transform)
-                    {
-                        if (t.GetComponent<Image>() != null)
-                        {
-                            t.GetComponent<Image>().sprite = Sprite.Create(hexTexture, new Rect(0, 0, 46, 46), Vector2.zero);
-                        }
-                    }
-                    goButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(270, 367);
+
+                    Dbgl("Creating input field");
 
                     UiWindowTextInput windowViaUiId = inputObject.GetComponent<UiWindowTextInput>();
+                    windowViaUiId.inputField = inputObject.GetComponentInChildren<TMP_InputField>(true);
                     var inputField = windowViaUiId.inputField;
-
                     foreach (var tmp in inputField.GetComponentsInChildren<TextMeshProUGUI>())
                     {
                         if (tmp.text.Length > 0)
@@ -163,45 +173,78 @@ namespace SpawnObject
                         }
                     }
 
-                    goButton.onClick = new Button.ButtonClickedEvent();
-                    goButton.onClick.AddListener(delegate () {
-                        var text = inputField.text;
-                        var amount = numberFieldObject.GetComponent<TMP_InputField>().text;
-                        var controller = Managers.GetManager<PlayersManager>().GetActivePlayerController();
-                        var aimray = controller.GetAimController().GetAimRay();
-                        var backpack = controller.GetPlayerBackpack();
-                        if (text.Length > 0 && amount.Length > 0 && objectNames.Contains(text))
+
+                    Dbgl("Creating button");
+                    Button goButton = inputObject.GetComponentInChildren<Button>(true);
+                    if (goButton != null)
+                    {
+                        goButton.gameObject.SetActive(true);
+                        goButton.interactable = true;
+                        goButton.enabled = true;
+                        foreach (Transform t in goButton.transform)
                         {
-                            Dbgl($"Spawning {amount} {text}");
-                            int i = 0;
-                            var group = GroupsHandler.GetAllGroups().FirstOrDefault(g => g.GetId() == text);
-                            if (group != null)
+                            if (t.GetComponent<Image>() != null)
                             {
-                                while (i++ < int.Parse(amount))
+                                t.GetComponent<Image>().sprite = Sprite.Create(hexTexture, new Rect(0, 0, 46, 46), Vector2.zero);
+                            }
+                        }
+                        goButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(270, 367);
+
+                        goButton.onClick = new Button.ButtonClickedEvent();
+                        goButton.onClick.AddListener(delegate ()
+                        {
+                            Dbgl($"Pressed button");
+
+                            var text = inputField.text;
+                            var amount = numberFieldObject.GetComponent<TMP_InputField>().text;
+                            var controller = Managers.GetManager<PlayersManager>().GetActivePlayerController();
+                            var aimray = controller.GetAimController().GetAimRay();
+                            var backpack = controller.GetPlayerBackpack();
+                            if (text.Length > 0 && amount.Length > 0 && objectNames.Contains(text))
+                            {
+                                Dbgl($"Spawning {amount} {text}");
+                                int i = 0;
+                                var group = GroupsHandler.GetAllGroups().FirstOrDefault(g => g.GetId() == text);
+                                if (group != null)
                                 {
-                                    if (Keyboard.current.leftShiftKey.isPressed && !backpack.GetInventory().IsFull())
+                                    while (i++ < int.Parse(amount))
                                     {
-                                        backpack.GetInventory().AddItem(WorldObjectsHandler.Instance.CreateNewWorldObject(group));
-                                    }
-                                    else if(group is GroupConstructible)
-                                    {
-                                        Dbgl($"{context is null}");
-                                        controller.StartCoroutine(BuildObject(group));
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        WorldObjectsHandler.Instance.CreateAndDropOnFloor(group, aimray.GetPoint(0.7f));
+                                        if (Keyboard.current.leftShiftKey.isPressed && !backpack.GetInventory().IsFull())
+                                        {
+                                            backpack.GetInventory().AddItem(WorldObjectsHandler.Instance.CreateNewWorldObject(group));
+                                        }
+                                        else if (group is GroupConstructible)
+                                        {
+                                            Dbgl($"{context is null}");
+                                            controller.StartCoroutine(BuildObject(group));
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            WorldObjectsHandler.Instance.CreateAndDropOnFloor(group, aimray.GetPoint(0.7f));
+                                        }
                                     }
                                 }
+                                if (Managers.GetManager<PopupsHandler>() != null)
+                                    AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new PopupData(group.GetImage(), $"Spawned {amount} {Readable.GetGroupName(group)}", 2));
                             }
-                            if (Managers.GetManager<PopupsHandler>() != null)
-                                AccessTools.FieldRefAccess<PopupsHandler, List<PopupData>>(Managers.GetManager<PopupsHandler>(), "popupsToPop").Add(new PopupData(group.GetImage(), $"Spawned {amount} {Readable.GetGroupName(group)}", 2));
-                        }
-                        Managers.GetManager<WindowsHandler>().CloseAllWindows();
-                        Destroy(inputObject);
-                        inputObject = null;
-                    });
+                            else
+                            {
+                                Dbgl($"missing amount or item");
+                            }
+                            Managers.GetManager<WindowsHandler>().OpenAndReturnUi(DataConfig.UiType.TextInput);
+                            inputObject.GetComponent<UiWindowTextInput>().OnClose();
+                            Destroy(inputObject);
+                            inputObject = null;
+                            Managers.GetManager<WindowsHandler>().CloseAllWindows();
+                        });
+                    }
+                    else
+                    {
+                        Dbgl("Button is null");
+                    }
+
+                    Dbgl("Creating number field");
 
 
                     Destroy(inputField.transform.parent.GetComponent<RectMask2D>());
@@ -209,24 +252,40 @@ namespace SpawnObject
                     numberFieldObject = Instantiate(inputField.gameObject, inputField.transform.parent);
                     numberFieldObject.name = "Amount";
                     numberFieldObject.GetComponent<RectTransform>().anchoredPosition = inputField.GetComponent<RectTransform>().anchoredPosition - new Vector2(0, inputField.GetComponent<RectTransform>().rect.height * inputField.GetComponent<RectTransform>().localScale.x);
-
+                    var numberField = numberFieldObject.GetComponent<TMP_InputField>();
                     foreach (var tmp in numberFieldObject.GetComponentsInChildren<TextMeshProUGUI>())
                     {
                         if (tmp.text.Length > 0)
                         {
+                            tmp.enabled = true;
                             tmp.text = amountText.Value;
                         }
                     }
 
-                    numberFieldObject.GetComponent<TMP_InputField>().onValueChanged = new TMP_InputField.OnChangeEvent();
-                    numberFieldObject.GetComponent<TMP_InputField>().text = "";
-                    numberFieldObject.GetComponent<TMP_InputField>().contentType = TMP_InputField.ContentType.IntegerNumber;
+                    numberField.onValueChanged = new TMP_InputField.OnChangeEvent();
+                    numberField.text = "";
+                    numberField.contentType = TMP_InputField.ContentType.IntegerNumber;
+
+                    Dbgl("Creating suggestion box");
 
                     suggestionBox = new GameObject("Suggestion Box");
                     suggestionBox.transform.SetParent(inputField.transform.parent, false);
                     suggestionBox.AddComponent<RectTransform>().anchoredPosition = inputField.GetComponent<RectTransform>().anchoredPosition - new Vector2(0, inputField.GetComponent<RectTransform>().rect.height * inputField.GetComponent<RectTransform>().localScale.x * 2);
                     suggestionBox.GetComponent<RectTransform>().sizeDelta = new Vector2(inputField.GetComponent<RectTransform>().rect.size.x * 0.9f * inputField.GetComponent<RectTransform>().localScale.x, 1000);
-                    windowViaUiId.SetTextWorldObject(new WorldObjectText());
+                    var wot = inputObject.AddComponent<WorldObjectText>();
+                    wot.textContainer = inputObject.GetComponentInChildren<TextMeshProUGUI>();
+                    if (wot.textContainer == null)
+                    {
+                        Dbgl("text container is null, creating");
+                        wot.textContainer = inputObject.AddComponent<TextMeshProUGUI>();
+                    }
+                    var proxy = inputObject.GetComponentInChildren<TextProxy>();
+                    if(proxy == null)
+                    {
+                        Dbgl("text proxy is null, creating");
+                        proxy = inputObject.AddComponent<TextProxy>();
+                    }
+                    AccessTools.FieldRefAccess<WorldObjectText, TextProxy>(wot, "_proxy") = proxy;
                     inputField.onValueChanged = new TMP_InputField.OnChangeEvent();
                     inputField.text = "";
                     inputField.onValueChanged.AddListener(delegate (string value)
@@ -259,11 +318,15 @@ namespace SpawnObject
                             {
                                 windowViaUiId.inputField.text = tmp.text;
                             });
+                            b.interactable = true;
                         }
                     });
+                    Dbgl("activating window");
                     windowViaUiId.gameObject.SetActive(true);
                     windowViaUiId.OnOpen();
-                    AccessTools.FieldRefAccess<WindowsHandler, DataConfig.UiType>(Managers.GetManager<WindowsHandler>(), "openedUi") = DataConfig.UiType.TextInput;
+                    windowViaUiId.SetTextWorldObject(wot);
+                    Dbgl("Window created successfully");
+
                 }
             }
         }
