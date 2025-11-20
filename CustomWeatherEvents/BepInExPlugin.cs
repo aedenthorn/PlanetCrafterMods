@@ -8,12 +8,13 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
+using Unity.Netcode;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
 namespace CustomWeatherEvents
 {
-    [BepInPlugin("aedenthorn.CustomWeatherEvents", "Custom Weather Events", "0.2.0")]
+    [BepInPlugin("aedenthorn.CustomWeatherEvents", "Custom Weather Events", "0.3.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -36,7 +37,7 @@ namespace CustomWeatherEvents
             if (isDebug.Value)
                 Debug.Log((pref ? typeof(BepInExPlugin).Namespace + " " : "") + str);
         }
-        private void Awake()
+        public void Awake()
         {
 
             context = this;
@@ -58,10 +59,10 @@ namespace CustomWeatherEvents
         }
 
         [HarmonyPatch(typeof(AsteroidsImpactHandler), "Start")]
-        static class AsteroidsImpactHandler_Start_Patch
+        public static class AsteroidsImpactHandler_Start_Patch
         {
 
-            static void Postfix(AsteroidsImpactHandler __instance, ref int ___spawnedResourcesDestroyMultiplier)
+            public static void Postfix(AsteroidsImpactHandler __instance, ref int ___spawnedResourcesDestroyMultiplier)
             {
                 Dbgl($"Setting spawnedResourcesDestroyMultiplier to {spawnedResourcesDestroyMultiplier.Value}");
 
@@ -70,12 +71,12 @@ namespace CustomWeatherEvents
         }
 
         [HarmonyPatch(typeof(MeteoHandler), "TryToLaunchAnEventLogic")]
-        static class MeteoHandler_TryToLaunchAnEventLogic_Patch
+        public static class MeteoHandler_TryToLaunchAnEventLogic_Patch
         {
 
-            static bool Prefix(MeteoHandler __instance, List<MeteoEventData> ___meteoEventQueue, MeteoEventData ___selectedDataMeteoEvent, List<MeteoEventData> ___meteoEvents)
+            public static bool Prefix(MeteoHandler __instance, List<MeteoEventData> ____meteoEventQueue, NetworkVariable<int> ____selectedDataMeteoEventIndex, List<MeteoEventData> ____meteoEvents)
             {
-                if (___meteoEventQueue.Count > 0 || ___selectedDataMeteoEvent != null)
+                if (____meteoEventQueue.Count > 0 || ____selectedDataMeteoEventIndex.Value < 0)
                     return true;
 
                 if (GetMultiplayerMode != null && ((string)GetMultiplayerMode.Invoke(null, new object[0])) == "CoopClient")
@@ -94,7 +95,7 @@ namespace CustomWeatherEvents
                 Dbgl("Launching random meteo event");
                 Dictionary<int, MeteoEventData> weights = new Dictionary<int, MeteoEventData>();
                 int totalWeight = 0;
-                foreach(var m in ___meteoEvents)
+                foreach(var m in ____meteoEvents)
                 {
                     if(meteoEventDict.events.TryGetValue(m.name, out var d))
                     {
@@ -137,9 +138,9 @@ namespace CustomWeatherEvents
             }
         }
         [HarmonyPatch(typeof(MeteoHandler), nameof(MeteoHandler.InitMeteoHandler))]
-        static class MeteoHandler_InitMeteoHandler_Patch
+        public static class MeteoHandler_InitMeteoHandler_Patch
         {
-            static void Prefix(MeteoHandler __instance)
+            public static void Prefix(MeteoHandler __instance)
             {
                 //Dbgl($"Default launch chance per interval {__instance.eventChanceOnOneHundred}");
                 Dbgl($"Changing tryToLaunchEventEvery from {__instance.tryToLaunchEventEvery} to {launchCheckInterval.Value}");
@@ -148,7 +149,7 @@ namespace CustomWeatherEvents
 
                 __instance.tryToLaunchEventEvery = launchCheckInterval.Value;
             }
-            static void Postfix(List<MeteoEventData> ___meteoEvents)
+            public static void Postfix(MeteoHandler __instance, List<MeteoEventData> ____meteoEvents)
             {
                 if (!modEnabled.Value)
                     return;
@@ -174,20 +175,20 @@ namespace CustomWeatherEvents
                 meteoEventDict =  File.Exists(filePath) ? JsonSerializer.Deserialize<WeatherDataDict>(File.ReadAllText(filePath)) : new WeatherDataDict();
                 List<GroupData> groupsData = (List<GroupData>)AccessTools.Field(typeof(StaticDataHandler), "groupsData").GetValue(AccessTools.Field(typeof(StaticDataHandler), "Instance").GetValue(null));
                 MeteoSendInSpace s = FindFirstObjectByType<MeteoSendInSpace>();
-                for (int i = 0; i < ___meteoEvents.Count; i++)
+                for (int i = 0; i < ____meteoEvents.Count; i++)
                 {
 
                     WeatherData d;
-                    Dbgl($"meteoEvent: {___meteoEvents[i].name}");
-                    if (!meteoEventDict.events.TryGetValue(___meteoEvents[i].name, out d))
+                    Dbgl($"meteoEvent: {____meteoEvents[i].name}");
+                    if (!meteoEventDict.events.TryGetValue(____meteoEvents[i].name, out d))
                     {
-                        d = new WeatherData(___meteoEvents[i], true);
-                        meteoEventDict.events[___meteoEvents[i].name] = d;
+                        d = new WeatherData(____meteoEvents[i], true);
+                        meteoEventDict.events[____meteoEvents[i].name] = d;
                         added = true;
                     }
                     else if (d.custom)
                     {
-                        ___meteoEvents[i] = SetMeteoData(___meteoEvents[i], d, groupsData);
+                        ____meteoEvents[i] = SetMeteoData(____meteoEvents[i], d, groupsData);
                     }
                 }
                 for (int i = 0; i < s.meteoEvents.Count; i++)
@@ -204,10 +205,10 @@ namespace CustomWeatherEvents
                     {
                         if(d.custom)
                             s.meteoEvents[i] = SetMeteoData(s.meteoEvents[i], d, groupsData);
-                        if(d.random && !___meteoEvents.Exists(e => e.name == s.meteoEvents[i].name))
+                        if(d.random && !____meteoEvents.Exists(e => e.name == s.meteoEvents[i].name))
                         {
                             Dbgl($"adding meteoEvent {s.meteoEvents[i].name} to random meteo events");
-                            ___meteoEvents.Add(s.meteoEvents[i]);
+                            ____meteoEvents.Add(s.meteoEvents[i]);
                         }
                     }
                 }
@@ -218,7 +219,7 @@ namespace CustomWeatherEvents
             }
         }
 
-        private static MeteoEventData SetMeteoData(MeteoEventData m, WeatherData d, List<GroupData> groupsData)
+        public static MeteoEventData SetMeteoData(MeteoEventData m, WeatherData d, List<GroupData> groupsData)
         {
             Dbgl($"Setting custom event data for {m.name}");
 

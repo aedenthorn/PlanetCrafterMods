@@ -11,12 +11,11 @@ using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.XR;
 using UnityEngine.UI;
 
 namespace SpawnObject
 {
-    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.7.0")]
+    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.7.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -25,10 +24,12 @@ namespace SpawnObject
         private static ConfigEntry<bool> isDebug;
         private static ConfigEntry<bool> dumpItems;
         private static ConfigEntry<string> toggleKey;
+        private static ConfigEntry<string> spawnKey;
         private static ConfigEntry<string> itemText;
         private static ConfigEntry<string> amountText;
 
         private static InputAction action;
+        //private static InputAction action2;
         private static Texture2D hexTexture;
         private static GameObject inputObject;
         private static GameObject suggestionBox;
@@ -46,11 +47,15 @@ namespace SpawnObject
             dumpItems = Config.Bind<bool>("Options", "DumpItems", true, "Set to true to perform a one-time item id dump to BepInEx/plugins/SpawnObject/items.txt the first time you open the GUI.");
             isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
             toggleKey = Config.Bind<string>("Options", "ToggleKey", "<Keyboard>/end", "Key to open / close GUI");
+            //spawnKey = Config.Bind<string>("Options", "SpawnKey", "<Keyboard>/enter", "Key to spawn item");
             itemText = Config.Bind<string>("Options", "ItemText", "Enter Item...", "Item text placeholder");
             amountText = Config.Bind<string>("Options", "AmountText", "Enter Amount...", "Amount text placeholder");
 
             if (!toggleKey.Value.Contains("<"))
                 toggleKey.Value = "<Keyboard>/" + toggleKey.Value;
+
+            if (!spawnKey.Value.Contains("<"))
+                spawnKey.Value = "<Keyboard>/" + spawnKey.Value;
 
             hexTexture = new Texture2D(46, 46);
             Color[] colors = new Color[46 * 46];
@@ -84,6 +89,9 @@ namespace SpawnObject
             action = new InputAction(binding: toggleKey.Value);
             action.Enable();
 
+            //action2 = new InputAction(binding: spawnKey.Value);
+            //action2.Enable();
+
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
             Dbgl("Plugin awake");
         }
@@ -93,10 +101,12 @@ namespace SpawnObject
         {
             public static void Postfix(PlayerInputDispatcher __instance)
             {
-                if (!modEnabled.Value)
+                if (!modEnabled.Value || Managers.GetManager<WindowsHandler>() == null)
                     return;
 
-                if (Managers.GetManager<WindowsHandler>()?.GetHasUiOpen() != true && inputObject != null)
+                var uiOpen = Managers.GetManager<WindowsHandler>().GetHasUiOpen();
+
+                if (!uiOpen && inputObject != null)
                 {
                     Dbgl($"ui open, closing");
                     UiWindowTextInput templateWindow = (UiWindowTextInput)Managers.GetManager<WindowsHandler>().OpenAndReturnUi(DataConfig.UiType.TextInput);
@@ -106,11 +116,18 @@ namespace SpawnObject
                     Managers.GetManager<WindowsHandler>().CloseAllWindows();
                     return;
                 }
+                /*
+                if (modEnabled.Value && uiOpen && inputObject != null && action2.WasPressedThisFrame())
+                {
+                    Dbgl("pressed spawn key");
+                    inputObject.GetComponentInChildren<Button>(true)?.onClick.Invoke();
+                }
+                */
                 if (modEnabled.Value && action.WasPressedThisFrame())
                 {
-                    Dbgl($"pressed action");
+                    Dbgl("pressed action");
 
-                    if (Managers.GetManager<WindowsHandler>()?.GetHasUiOpen() == true)
+                    if (uiOpen)
                     {
                         if (inputObject != null)
                         {
@@ -165,6 +182,7 @@ namespace SpawnObject
                     UiWindowTextInput windowViaUiId = inputObject.GetComponent<UiWindowTextInput>();
                     windowViaUiId.inputField = inputObject.GetComponentInChildren<TMP_InputField>(true);
                     var inputField = windowViaUiId.inputField;
+                    inputField.characterLimit = 0;
                     foreach (var tmp in inputField.GetComponentsInChildren<TextMeshProUGUI>())
                     {
                         if (tmp.text.Length > 0)
