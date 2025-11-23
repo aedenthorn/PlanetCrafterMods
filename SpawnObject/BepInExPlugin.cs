@@ -15,7 +15,7 @@ using UnityEngine.UI;
 
 namespace SpawnObject
 {
-    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.7.1")]
+    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.7.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -54,8 +54,8 @@ namespace SpawnObject
             if (!toggleKey.Value.Contains("<"))
                 toggleKey.Value = "<Keyboard>/" + toggleKey.Value;
 
-            if (!spawnKey.Value.Contains("<"))
-                spawnKey.Value = "<Keyboard>/" + spawnKey.Value;
+            //if (!spawnKey.Value.Contains("<"))
+            //    spawnKey.Value = "<Keyboard>/" + spawnKey.Value;
 
             hexTexture = new Texture2D(46, 46);
             Color[] colors = new Color[46 * 46];

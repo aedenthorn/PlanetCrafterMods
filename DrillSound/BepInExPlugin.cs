@@ -44,20 +44,20 @@ namespace DrillSound
         }
 
         [HarmonyPatch(typeof(PlayerAudio), "PlayRecolt")]
-        static class PlayerAudio_PlayRecolt_Patch
+        public static class PlayerAudio_PlayRecolt_Patch
         {
-            static bool Prefix(PlayerAudio __instance, ref bool _play, float _changeSpeedPercentage)
+            public static bool Prefix(PlayerAudio __instance, ref bool play, float changeSpeedPercentage)
             {
-                if (!modEnabled.Value || !_play)
+                if (!modEnabled.Value || !play)
                     return true;
                 if (muteSound.Value)
                 {
-                    _play = false;
+                    play = false;
                     return true;
                 }
                 __instance.soundContainerRecolt.volume = volume.Value;
-                __instance.soundContainerRecolt.pitch = 1f + _changeSpeedPercentage / 100f;
-                __instance.recoltMixer.SetFloat("RecoltPitch", 1 / (1f + _changeSpeedPercentage / 100f) * pitch.Value);
+                __instance.soundContainerRecolt.pitch = 1f + changeSpeedPercentage / 100f;
+                __instance.recoltMixer.SetFloat("RecoltPitch", 1 / (1f + changeSpeedPercentage / 100f) * pitch.Value);
                 __instance.soundContainerRecolt.Play();
                 return false;
             }

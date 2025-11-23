@@ -3,6 +3,7 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using SpaceCraft;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -11,7 +12,7 @@ using UnityEngine;
 
 namespace ShowNextUnlockableGoal
 {
-    [BepInPlugin("aedenthorn.ShowNextUnlockableGoal", "Show Next Unlockable Goal", "0.2.1")]
+    [BepInPlugin("aedenthorn.ShowNextUnlockableGoal", "Show Next Unlockable Goal", "0.2.4")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -60,9 +61,9 @@ namespace ShowNextUnlockableGoal
             };
         }
         [HarmonyPatch(typeof(WorldUnitsDisplayer), "OnEnable")]
-        private static class WorldUnitsDisplayer_OnEnable_Patch
+        public static class WorldUnitsDisplayer_OnEnable_Patch
         {
-            static void Postfix(WorldUnitsDisplayer __instance)
+            public static void Postfix(WorldUnitsDisplayer __instance)
             {
                 if (!modEnabled.Value)
                     return;
@@ -98,19 +99,35 @@ namespace ShowNextUnlockableGoal
 
         private static string GetValueString(string str, WorldUnit unit)
         {
-            var unitType = unit.GetUnitType();
+            DataConfig.WorldUnitType unitType = unit.GetUnitType();
             double next = double.MaxValue;
-            foreach (Group group in Managers.GetManager<UnlockingHandler>().GetUnlockableGroupsOverUnit(unitType))
+            double current = unit.GetValue();
+            if (unitType == DataConfig.WorldUnitType.Terraformation)
             {
-                if (group is null)
-                    continue;
-
-                UnlockingInfos unlockingInfos = group.GetUnlockingInfos();
-                if (unlockingInfos is null)
-                    continue;
-                if (unlockingInfos.GetUnlockingValue() < next)
+                var stages = Managers.GetManager<PlanetLoader>().GetCurrentPlanetData().GetPlanetTerraformationStages();
+                foreach (TerraformStage terraformStage in stages)
                 {
-                    next = unlockingInfos.GetUnlockingValue();
+                    if (current < terraformStage.GetStageStartValue() && terraformStage.GetStageStartValue() < next)
+                    {
+                        next = terraformStage.GetStageStartValue();
+                    }
+                }
+            }
+            else
+            {
+                foreach (Group group in GroupsHandler.GetAllGroups())
+                {
+                    if (group is null)
+                        continue;
+
+                    UnlockingInfos unlockingInfos = group.GetUnlockingInfos();
+                    if (unlockingInfos is null || unlockingInfos.GetWorldUnit() != unitType || (unlockingInfos.GetIsUnlocked(true) || unitType == DataConfig.WorldUnitType.Terraformation))
+                        continue;
+                    double value = unlockingInfos.GetUnlockingValue();
+                    if (value < next && value > current)
+                    {
+                        next = unlockingInfos.GetUnlockingValue();
+                    }
                 }
             }
             if (next < double.MaxValue)

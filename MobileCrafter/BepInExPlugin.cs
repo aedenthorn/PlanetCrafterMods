@@ -9,7 +9,7 @@ using UnityEngine.InputSystem;
 
 namespace MobileCrafter
 {
-    [BepInPlugin("MobileCrafter", "Mobile Crafter", "0.3.0")]
+    [BepInPlugin("MobileCrafter", "Mobile Crafter", "0.3.1")]
     public class mobileCrafter : BaseUnityPlugin
     {
         private static InputAction actionOpen;
@@ -25,7 +25,7 @@ namespace MobileCrafter
         public static bool MobileCrafterCanCraft;
         public static bool hasBeenAdded;
 
-        private void Awake()
+        public void Awake()
         {
             context = this;
             mobileCrafterKey = Config.Bind<string>("Options", "MobileCrafterKey", "<Keyboard>/p", "Key binding to open the crafter");
@@ -45,9 +45,9 @@ namespace MobileCrafter
         }
 
         [HarmonyPatch(typeof(PlayerInputDispatcher), "Update")]
-        static class PlayerInputDispatcher_Update_Patch
+        public static class PlayerInputDispatcher_Update_Patch
         {
-            static void Postfix()
+            public static void Postfix()
             {
                 if (actionOpen.WasPressedThisFrame())
                 {
@@ -55,7 +55,7 @@ namespace MobileCrafter
                     if (MobileCrafterCanCraft || Managers.GetManager<GameSettingsHandler>().GetCurrentGameSettings().GetFreeCraft())
                     {
                         UiWindowCraft uiWindowCraft = (UiWindowCraft)Managers.GetManager<WindowsHandler>().OpenAndReturnUi(DataConfig.UiType.Craft);
-                        uiWindowCraft.SetCrafter(craftAction, true);
+                        uiWindowCraft.SetCrafter(craftAction, true, false);
                         uiWindowCraft.ChangeTitle(titleText.Value);
                         context.Logger.LogInfo("opening crafter");
                     }

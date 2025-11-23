@@ -238,8 +238,8 @@ namespace BeaconToggleMenu
             }
         }
 
-        [HarmonyPatch(typeof(MachineBeaconUpdater), "Update")]
-        public static class MachineBeaconUpdater_Update_Patch
+        [HarmonyPatch(typeof(MachineBeaconUpdater), "LateUpdate")]
+        public static class MachineBeaconUpdater_LateUpdate_Patch
         {
             public static bool Prefix(MachineBeaconUpdater __instance)
             {
