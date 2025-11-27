@@ -86,6 +86,8 @@ namespace ResourceScan
                     }
                     return;
                 }
+                if (Managers.GetManager<WindowsHandler>()?.GetHasUiOpen() == true)
+                    return;
                 if (action.WasPressedThisFrame())
                 {
                     scanEnabled.Value = !scanEnabled.Value;

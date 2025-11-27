@@ -68,6 +68,9 @@ namespace CustomAudio
         {
             if (!modEnabled.Value)
                 return;
+            if (Managers.GetManager<WindowsHandler>()?.GetHasUiOpen() == true)
+                return;
+
             if (action.WasPressedThisFrame())
             {
                 var audioResourcesHandler = Managers.GetManager<AudioResourcesHandler>();

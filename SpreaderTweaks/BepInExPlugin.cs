@@ -4,15 +4,12 @@ using BepInEx.Logging;
 using HarmonyLib;
 using SpaceCraft;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
 using UnityEngine;
 
 namespace SpreaderTweaks
 {
-    [BepInPlugin("aedenthorn.SpreaderTweaks", "Spreader Tweaks", "0.3.0")]
+    [BepInPlugin("aedenthorn.SpreaderTweaks", "Spreader Tweaks", "0.4.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -28,15 +25,13 @@ namespace SpreaderTweaks
         public static ConfigEntry<float> grassRadiusMult;
         public static ConfigEntry<float> grassIntervalMult;
         public static ConfigEntry<float> grassAmountMult;
-        
-        public static AccessTools.FieldRef<object, WorldObject> fieldRef;
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
             if (isDebug.Value)
                 context.Logger.Log(logLevel, str);
         }
-        private void Awake()
+        public void Awake()
         {
 
             context = this;
@@ -54,66 +49,51 @@ namespace SpreaderTweaks
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
             Dbgl("Plugin awake");
-            fieldRef = AccessTools.FieldRefAccess<WorldObject>(typeof(MachineOutsideGrower), "worldObjectGrower");
 
         }
 
-        [HarmonyPatch(typeof(MachineOutsideGrower), nameof(MachineOutsideGrower.SetWorldObjectForGrower))]
-        static class MachineOutsideGrower_SetWorldObjectForGrower_Patch
+        [HarmonyPatch(typeof(MachineGrowerVegetationStatic), "UpdateGrowing")]
+        public static class MachineGrowerVegetationStatic_UpdateGrowing_Patch
         {
-            public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            public static void Prefix(MachineGrowerVegetationStatic __instance, ref float timeRepeat)
             {
-                var codes = new List<CodeInstruction>(instructions);
                 if (!modEnabled.Value)
-                    return codes.AsEnumerable();
-
-                Dbgl("Transpiling MachineOutsideGrower.SetWorldObjectForGrower");
-                for (int i = 0; i < codes.Count; i++)
+                    return;
+                WorldObject worldObject = __instance.GetComponentInChildren<WorldObjectAssociated>(true).GetWorldObject();
+                if (worldObject == null)
+                    return;
+                string id = worldObject.GetGroup().id;
+                if (id.StartsWith("TreeSpreader"))
                 {
-                    if (i < codes.Count - 1 && codes[i].opcode == OpCodes.Ldstr && (string)codes[i].operand == "LaunchGrowingProcess" && codes[i + 1].opcode == OpCodes.Ldc_R4 && (float)codes[i + 1].operand == 3)
-                    {
-                        Dbgl("Switching interval to method for multiplier");
-                        codes.Insert(i + 2, new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BepInExPlugin), nameof(BepInExPlugin.GetInterval))));
-                        codes.Insert(i + 2, new CodeInstruction(OpCodes.Ldarg_0));
-                        break;
-                    }
+                    Dbgl($"Starting tree spreader {timeRepeat * treeIntervalMult.Value}");
+                    timeRepeat *= treeIntervalMult.Value;
                 }
-                return codes.AsEnumerable();
+                if (id.StartsWith("GrassSpreader"))
+                {
+                    Dbgl($"Starting grass spreader {timeRepeat * grassIntervalMult.Value}");
+                    timeRepeat *= grassIntervalMult.Value;
+                }
+                if (id.StartsWith("SeedSpreader"))
+                {
+                    Dbgl($"Starting flower spreader {timeRepeat * flowerIntervalMult.Value}");
+                    timeRepeat *= flowerIntervalMult.Value;
+                }
+                return;
             }
         }
 
-        public static float GetInterval(float interval, MachineOutsideGrower grower)
+        [HarmonyPatch(typeof(MachineGrowerVegetationStatic), "InstantiateAtRandomPosition")]
+        public static class MachineOutsideGrower_InstantiateAtRandomPosition_Patch
         {
-            if (!modEnabled.Value)
-                return interval;
-            string id = fieldRef.Invoke(grower).GetGroup().id;
-            if (id.StartsWith("TreeSpreader"))
-            {
-                Dbgl($"Starting tree spreader {interval * treeIntervalMult.Value}");
-                return interval * treeIntervalMult.Value;
-            }
-            if (id.StartsWith("GrassSpreader"))
-            {
-                Dbgl($"Starting grass spreader {interval * grassIntervalMult.Value}");
-                return interval * grassIntervalMult.Value;
-            }
-            if (id.StartsWith("SeedSpreader"))
-            {
-                Dbgl($"Starting flower spreader {interval * flowerIntervalMult.Value}");
-                return interval * flowerIntervalMult.Value;
-            }
-            return interval;
-        }
-
-        [HarmonyPatch(typeof(MachineOutsideGrower), "InstantiateAtRandomPosition")]
-        static class MachineOutsideGrower_InstantiateAtRandomPosition_Patch
-        {
-            static void Prefix(MachineOutsideGrower __instance, ref float __state)
+            public static void Prefix(MachineGrowerVegetationStatic __instance, ref float __state)
             {
                 if (!modEnabled.Value)
                     return;
                 __state = __instance.radius;
-                string id = fieldRef.Invoke(__instance).GetGroup().id;
+                WorldObject worldObject = __instance.GetComponentInChildren<WorldObjectAssociated>(true).GetWorldObject();
+                if (worldObject == null)
+                    return;
+                string id = worldObject.GetGroup().id;
                 if (id.StartsWith("TreeSpreader"))
                 {
                     __instance.radius *= treeRadiusMult.Value;
@@ -127,45 +107,44 @@ namespace SpreaderTweaks
                     __instance.radius *= flowerRadiusMult.Value;
                 }
             }
-            static void Postfix(MachineOutsideGrower __instance, float __state)
+            public static void Postfix(MachineGrowerVegetationStatic __instance, float __state)
             {
                 if (!modEnabled.Value)
                     return;
                 __instance.radius = __state;
             }
         }
-        [HarmonyPatch(typeof(MachineOutsideGrower), "LaunchGrowingProcess")]
-        static class MachineOutsideGrower_LaunchGrowingProcess_Patch
+
+        [HarmonyPatch(typeof(MachineGrowerVegetationStatic), nameof(MachineGrowerVegetationStatic.SpawnRandom), new Type[0])]
+        public static class MachineGrowerVegetationStatic_SpawnRandom_Patch
         {
-            static void Prefix(MachineOutsideGrower __instance, ref float[] __state)
+            public static void Prefix(MachineGrowerVegetationStatic __instance, ref int __state)
             {
                 if (!modEnabled.Value)
                     return;
-                __state = new float[] { __instance.updateInterval, __instance.spawNumber };
-
-                string id = fieldRef.Invoke(__instance).GetGroup().id;
+                __state = __instance.spawNumber;
+                WorldObject worldObject = __instance.GetComponentInChildren<WorldObjectAssociated>(true).GetWorldObject();
+                if (worldObject == null)
+                    return;
+                string id = worldObject.GetGroup().id;
                 if (id.StartsWith("TreeSpreader"))
                 {
-                    __instance.updateInterval *= treeIntervalMult.Value;
                     __instance.spawNumber = Mathf.RoundToInt(__instance.spawNumber * treeAmountMult.Value);
                 }
                 if (id.StartsWith("GrassSpreader"))
                 {
-                    __instance.updateInterval *= grassIntervalMult.Value;
                     __instance.spawNumber = Mathf.RoundToInt(__instance.spawNumber * grassAmountMult.Value);
                 }
                 if (id.StartsWith("SeedSpreader"))
                 {
-                    __instance.updateInterval *= flowerIntervalMult.Value;
                     __instance.spawNumber = Mathf.RoundToInt(__instance.spawNumber * flowerAmountMult.Value);
                 }
             }
-            static void Postfix(MachineOutsideGrower __instance, float[] __state)
+            public static void Postfix(MachineGrowerVegetationStatic __instance, int __state)
             {
                 if (!modEnabled.Value)
                     return;
-                __instance.updateInterval = __state[0];
-                __instance.spawNumber = (int)__state[1];
+                __instance.spawNumber = __state;
             }
         }
     }

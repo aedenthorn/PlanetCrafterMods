@@ -55,7 +55,7 @@ namespace CraftFromContainers
 
         }
 
-        private void Update()
+        public void Update()
         {
 
             if (Managers.GetManager<WindowsHandler>()?.GetHasUiOpen() == false && action.WasPressedThisFrame())

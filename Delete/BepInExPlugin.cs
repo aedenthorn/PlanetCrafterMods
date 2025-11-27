@@ -42,12 +42,15 @@ namespace Delete
         }
 
         [HarmonyPatch(typeof(PlayerInputDispatcher), "Update")]
-        static class PlayerInputDispatcher_Update_Patch
+        public static class PlayerInputDispatcher_Update_Patch
         {
-            static void Postfix()
+            public static void Postfix()
             {
                 if (!modEnabled.Value)
                     return;
+                if (Managers.GetManager<WindowsHandler>()?.GetHasUiOpen() == true)
+                    return;
+
                 if (actionDel.WasPressedThisFrame() && Managers.GetManager<PlayersManager>())
                 {
                     Dbgl("Pressed delete key");

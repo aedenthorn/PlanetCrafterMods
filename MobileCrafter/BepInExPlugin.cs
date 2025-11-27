@@ -9,7 +9,7 @@ using UnityEngine.InputSystem;
 
 namespace MobileCrafter
 {
-    [BepInPlugin("MobileCrafter", "Mobile Crafter", "0.3.1")]
+    [BepInPlugin("MobileCrafter", "Mobile Crafter", "0.3.2")]
     public class mobileCrafter : BaseUnityPlugin
     {
         private static InputAction actionOpen;
@@ -49,6 +49,9 @@ namespace MobileCrafter
         {
             public static void Postfix()
             {
+                if (Managers.GetManager<WindowsHandler>()?.GetHasUiOpen() == true)
+                    return;
+
                 if (actionOpen.WasPressedThisFrame())
                 {
                     context.Logger.LogInfo("pressed crafter key");
