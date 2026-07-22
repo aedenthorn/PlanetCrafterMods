@@ -57,7 +57,7 @@
   </ItemGroup>
 
   <!-- Add game references -->
-  <ItemGroup Label="_Data">
+  <ItemGroup Label="Game">
     <Reference Include="Assembly-CSharp">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(ManagedDataPath)\Assembly-CSharp.dll</HintPath>
@@ -66,6 +66,20 @@
     <Reference Include="Assembly-CSharp-firstpass">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(ManagedDataPath)\Assembly-CSharp-firstpass.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Add misc references -->
+  <ItemGroup Label="Misc">
+    <Reference Include="netstandard">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(UnityPath)\netstandard.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="mscorlib">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(UnityPath)\mscorlib.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>

@@ -16,7 +16,7 @@ using UnityEngine.Networking;
 
 namespace CustomAudio
 {
-    [BepInPlugin("aedenthorn.CustomAudio", "CustomAudio", "0.2.0")]
+    [BepInPlugin("aedenthorn.CustomAudio", "CustomAudio", "0.3.0")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -177,9 +177,9 @@ namespace CustomAudio
 
 
         [HarmonyPatch(typeof(PopupsHandler), "Start")]
-        static class PopupsHandler_Start_Patch
+        public static class PopupsHandler_Start_Patch
         {
-            static void Postfix(AudioResourcesHandler ___audioResourcesHandler)
+            public static void Postfix(AudioResourcesHandler ___audioResourcesHandler)
             {
                 if (!modEnabled.Value)
                     return;
@@ -188,15 +188,15 @@ namespace CustomAudio
             }
         }
         [HarmonyPatch(typeof(PopupDisplayer), "Pop")]
-        static class PopupDisplayer_Pop_Patch
+        public static class PopupDisplayer_Pop_Patch
         {
-            static void Postfix(PopupData _popupData)
+            public static void Postfix(PopupData popupData)
             {
                 if (!modEnabled.Value)
                     return;
-                if(_popupData.GetType().GetField("audio") != null)
+                if(popupData.GetType().GetField("audio") != null)
                 {
-                    string audio = _popupData.GetType().GetField("audio").GetValue(_popupData) as string;
+                    string audio = popupData.GetType().GetField("audio").GetValue(popupData) as string;
                     if(audio != null && loadedClips.TryGetValue(audio, out AudioClip clip))
                     {
                         FindObjectOfType<PopupsHandler>().soundContainerAlert.PlayOneShot(clip);

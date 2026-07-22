@@ -5,11 +5,9 @@ using HarmonyLib;
 using SpaceCraft;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Debug = UnityEngine.Debug;
 
 namespace CraftFromContainers
 {
@@ -34,7 +32,7 @@ namespace CraftFromContainers
             if (isDebug.Value)
                 context.Logger.Log(logLevel, str);
         }
-        private void Awake()
+        public void Awake()
         {
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
@@ -179,13 +177,6 @@ namespace CraftFromContainers
                 groupsCopy.AddRange(groups);
                 //Dbgl($"checking status for missing items:");
 
-                for (int j = 0; j < __result.Count; j++)
-                {
-                    if (!__result[j])
-                    {
-                        //Dbgl($"{groupsCopy[j].GetId()}");
-                    }
-                }
 
 
                 InventoryAssociated[] ial = FindObjectsByType<InventoryAssociated>(FindObjectsSortMode.None);
