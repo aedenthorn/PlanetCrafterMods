@@ -13,7 +13,7 @@ using Image = UnityEngine.UI.Image;
 
 namespace StorageAnywhere
 {
-    [BepInPlugin("aedenthorn.StorageAnywhere", "Storage Anywhere", "0.4.1")]
+    [BepInPlugin("aedenthorn.StorageAnywhere", "Storage Anywhere", "0.4.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -60,7 +60,7 @@ namespace StorageAnywhere
         [HarmonyPatch(typeof(PlayerInputDispatcher), "Update")]
         public static class PlayerInputDispatcher_Update_Patch
         {
-            public void Postfix()
+            public static void Postfix()
             {
                 if (!modEnabled.Value || Managers.GetManager<PlayersManager>() == null)
                     return;
