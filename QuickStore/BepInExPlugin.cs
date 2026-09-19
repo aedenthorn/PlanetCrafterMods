@@ -12,7 +12,7 @@ using UnityEngine.InputSystem;
 
 namespace QuickStore
 {
-    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.7.2")]
+    [BepInPlugin("aedenthorn.QuickStore", "Quick Store", "0.7.3")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -20,7 +20,7 @@ namespace QuickStore
         private static ConfigEntry<bool> modEnabled;
         private static ConfigEntry<bool> isDebug;
         private static ConfigEntry<bool> allowStoreInChests;
-        private static ConfigEntry<string> storeKey;
+        private static ConfigEntry<Key> storeKey;
         private static ConfigEntry<string> allowList;
         private static ConfigEntry<string> disallowList;
         private static ConfigEntry<float> range;
@@ -29,21 +29,19 @@ namespace QuickStore
         private static ConfigEntry<bool> storeIfContainerNameContains;
         private static ConfigEntry<string> requireNameFlagtoStore;
 
-        private static InputAction action;
-
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
             if (isDebug.Value)
                 context.Logger.Log(logLevel, str);
         }
-        private void Awake()
+        public void Awake()
         {
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
             allowStoreInChests = Config.Bind<bool>("Options", "AllowStoreInChests", true, "Allow storing in chests.");
-            storeKey = Config.Bind<string>("Options", "StoreKey", "<Keyboard>/l", "Key to store items");
+            storeKey = Config.Bind<Key>("Options", "StoreItemsKey", Key.L, "Key to store items");
             allowList = Config.Bind<string>("Options", "AllowList", "", "Comma-separated list of item IDs to allow storing (overrides DisallowList).");
             disallowList = Config.Bind<string>("Options", "DisallowList", "", "Comma-separated list of item IDs to disallow storing (if AllowList is empty)");
             range = Config.Bind<float>("Options", "Range", 20f, "Store range (m)");
@@ -52,24 +50,17 @@ namespace QuickStore
             storeIfContainerNameContains = Config.Bind<bool>("Options", "StoreIfContainerNameContains", true, "Store item in an container when the container name contains the name of the item.");
             requireNameFlagtoStore = Config.Bind<string>("Options", "requireNameFlagtoStore", "", "Require this tag in the container name to store item");
 
-
-            if (!storeKey.Value.Contains("<"))
-                storeKey.Value = "<Keyboard>/" + storeKey.Value;
-
-            action = new InputAction(binding: storeKey.Value);
-            action.Enable();
-
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
 
             Dbgl("Plugin awake");
 
         }
         [HarmonyPatch(typeof(PlayerInputDispatcher), "Update")]
-        static class PlayerInputDispatcher_Update_Patch
+        public static class PlayerInputDispatcher_Update_Patch
         {
-            static void Postfix()
+            public static void Postfix()
             {
-                if (modEnabled.Value && Managers.GetManager<WindowsHandler>()?.GetHasUiOpen() == false && action.WasPressedThisFrame())
+                if (modEnabled.Value && Managers.GetManager<WindowsHandler>()?.GetHasUiOpen() == false && Keyboard.current != null && Keyboard.current[storeKey.Value].wasPressedThisFrame)
                 {
                     Dbgl("Hotkey Pressed");
 
@@ -77,7 +68,7 @@ namespace QuickStore
                 }
             }
         }
-        private static void StoreItems()
+        public static void StoreItems()
         {
             List<string> allow = allowList.Value.Split(',').ToList();
             List<string> disallow = disallowList.Value.Split(',').ToList();

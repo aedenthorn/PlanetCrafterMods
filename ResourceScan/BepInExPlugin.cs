@@ -12,7 +12,7 @@ using UnityEngine.InputSystem;
 
 namespace ResourceScan
 {
-    [BepInPlugin("aedenthorn.ResourceScan", "Resource Scan", "0.1.0")]
+    [BepInPlugin("aedenthorn.ResourceScan", "Resource Scan", "0.1.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         public static BepInExPlugin context;
@@ -20,8 +20,8 @@ namespace ResourceScan
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> isDebug;
         public static ConfigEntry<bool> scanEnabled;
-        public static ConfigEntry<string> toggleScanKey;
-        public static ConfigEntry<string> toggleResourceKey;
+        public static ConfigEntry<Key> toggleScanKey;
+        public static ConfigEntry<Key> toggleResourceKey;
         public static ConfigEntry<float> checkInterval;
         public static ConfigEntry<float> minRange;
         public static ConfigEntry<float> maxRange;
@@ -31,8 +31,6 @@ namespace ResourceScan
 
         public static float elapsed;
 
-        public static InputAction action;
-        public static InputAction action2;
         public static List<GameObject> hoveringList = new List<GameObject>();
 
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
@@ -45,20 +43,14 @@ namespace ResourceScan
             context = this;
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
-            toggleScanKey = Config.Bind<string>("Options", "ToggleScanKey", "<Keyboard>/pageUp", "Key used to toggle the scan");
-            toggleResourceKey = Config.Bind<string>("Options", "ToggleResourceKey", "<Keyboard>/pageDown", "Key used to toggle the scan");
+            toggleScanKey = Config.Bind<Key>("Options", "ToggleScanningKey", Key.PageUp, "Key used to toggle the scan");
+            toggleResourceKey = Config.Bind<Key>("Options", "ToggleSpecificResourceKey", Key.PageDown, "Key used to toggle a specific resource scan");
             scanEnabled = Config.Bind<bool>("Options", "ScanEnabled", true, "Enable this mod");
             checkInterval = Config.Bind<float>("Options", "CheckInterval", 3f, "Seconds betweeen check");
             minRange = Config.Bind<float>("Options", "MinRange", 20f, "Min range to check in meters");
             maxRange = Config.Bind<float>("Options", "MaxRange", 100f, "Max range to check in meters");
-            allowList = Config.Bind<string>("Options", "AllowList", "", "Comma-separated list of item IDs to allow mining (overrides DisallowList).");
-            disallowList = Config.Bind<string>("Options", "DisallowList", "", "Comma-separated list of item IDs to disallow mining (if AllowList is empty)");
-            
-            action = new InputAction(binding: toggleScanKey.Value);
-            action.Enable();
-
-            action2 = new InputAction(binding: toggleResourceKey.Value);
-            action2.Enable();
+            allowList = Config.Bind<string>("Options", "AllowList", "", "Comma-separated list of item IDs to allow scanning (overrides DisallowList).");
+            disallowList = Config.Bind<string>("Options", "DisallowList", "", "Comma-separated list of item IDs to disallow scanning (if AllowList is empty)");
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
             Dbgl("Plugin awake");
@@ -88,13 +80,13 @@ namespace ResourceScan
                 }
                 if (Managers.GetManager<WindowsHandler>()?.GetHasUiOpen() == true)
                     return;
-                if (action.WasPressedThisFrame())
+                if (toggleScanKey.Value != Key.None && Keyboard.current != null && Keyboard.current[toggleScanKey.Value].wasPressedThisFrame)
                 {
                     scanEnabled.Value = !scanEnabled.Value;
                     Dbgl($"Scan enabled: {scanEnabled.Value}");
                     elapsed = checkInterval.Value;
                 }
-                else if (action2.WasPressedThisFrame())
+                else if (toggleResourceKey.Value != Key.None && Keyboard.current != null && Keyboard.current[toggleResourceKey.Value].wasPressedThisFrame)
                 {
                     Dbgl($"Pressed specify key");
                     PlayerAimController c = FindAnyObjectByType<PlayerAimController>();

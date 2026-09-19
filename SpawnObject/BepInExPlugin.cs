@@ -15,7 +15,7 @@ using UnityEngine.UI;
 
 namespace SpawnObject
 {
-    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.7.2")]
+    [BepInPlugin("aedenthorn.SpawnObject", "Spawn Object", "0.7.3")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -23,12 +23,10 @@ namespace SpawnObject
         private static ConfigEntry<bool> modEnabled;
         private static ConfigEntry<bool> isDebug;
         private static ConfigEntry<bool> dumpItems;
-        private static ConfigEntry<string> toggleKey;
-        private static ConfigEntry<string> spawnKey;
+        private static ConfigEntry<Key> toggleKey;
         private static ConfigEntry<string> itemText;
         private static ConfigEntry<string> amountText;
 
-        private static InputAction action;
         //private static InputAction action2;
         private static Texture2D hexTexture;
         private static GameObject inputObject;
@@ -46,13 +44,11 @@ namespace SpawnObject
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             dumpItems = Config.Bind<bool>("Options", "DumpItems", true, "Set to true to perform a one-time item id dump to BepInEx/plugins/SpawnObject/items.txt the first time you open the GUI.");
             isDebug = Config.Bind<bool>("General", "IsDebug", false, "Enable debug logs");
-            toggleKey = Config.Bind<string>("Options", "ToggleKey", "<Keyboard>/end", "Key to open / close GUI");
-            //spawnKey = Config.Bind<string>("Options", "SpawnKey", "<Keyboard>/enter", "Key to spawn item");
+            toggleKey = Config.Bind<Key>("Options", "ToggleGUIKey", Key.End, "Key to open / close GUI");
+            
             itemText = Config.Bind<string>("Options", "ItemText", "Enter Item...", "Item text placeholder");
             amountText = Config.Bind<string>("Options", "AmountText", "Enter Amount...", "Amount text placeholder");
 
-            if (!toggleKey.Value.Contains("<"))
-                toggleKey.Value = "<Keyboard>/" + toggleKey.Value;
 
             //if (!spawnKey.Value.Contains("<"))
             //    spawnKey.Value = "<Keyboard>/" + spawnKey.Value;
@@ -85,9 +81,6 @@ namespace SpawnObject
             }
             hexTexture.SetPixels(colors);
             hexTexture.Apply();
-
-            action = new InputAction(binding: toggleKey.Value);
-            action.Enable();
 
             //action2 = new InputAction(binding: spawnKey.Value);
             //action2.Enable();
@@ -123,7 +116,7 @@ namespace SpawnObject
                     inputObject.GetComponentInChildren<Button>(true)?.onClick.Invoke();
                 }
                 */
-                if (modEnabled.Value && action.WasPressedThisFrame())
+                if (modEnabled.Value && Keyboard.current != null && Keyboard.current[toggleKey.Value].wasPressedThisFrame)
                 {
                     Dbgl("pressed action");
 

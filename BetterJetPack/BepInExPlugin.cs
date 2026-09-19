@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace BetterJetPack
 {
-    [BepInPlugin("aedenthorn.BetterJetPack", "Better JetPack", "0.3.1")]
+    [BepInPlugin("aedenthorn.BetterJetPack", "Better JetPack", "0.3.2")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -30,7 +30,7 @@ namespace BetterJetPack
             if (isDebug.Value)
                 Debug.Log((pref ? typeof(BepInExPlugin).Namespace + " " : "") + str);
         }
-        private void Awake()
+        public void Awake()
         {
 
             context = this;
@@ -82,18 +82,18 @@ namespace BetterJetPack
                 }
                 return codes.AsEnumerable();
             }
-            static void Prefix(PlayerMovable __instance, ref float ___jetpackFactor, ref float __state)
+            static void Prefix(PlayerMovable __instance, ref float ____jetpackFactor, ref float __state)
             {
                 if (!modEnabled.Value)
                     return;
-                __state = ___jetpackFactor;
-                ___jetpackFactor *= speedMult.Value;
+                __state = ____jetpackFactor;
+                ____jetpackFactor *= speedMult.Value;
             }
-            static void Postfix(PlayerMovable __instance, ref float ___jetpackFactor, ref float __state)
+            static void Postfix(PlayerMovable __instance, ref float ____jetpackFactor, ref float __state)
             {
                 if (!modEnabled.Value)
                     return;
-                ___jetpackFactor = __state;
+                ____jetpackFactor = __state;
             }
         }
 

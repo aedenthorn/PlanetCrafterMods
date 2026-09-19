@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 
 namespace AutoMine
 {
-    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.8.3")]
+    [BepInPlugin("aedenthorn.AutoMine", "AutoMine", "0.8.5")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -20,9 +20,9 @@ namespace AutoMine
         private static ConfigEntry<bool> isDebug;
         private static ConfigEntry<bool> intervalCheck;
         private static ConfigEntry<bool> includeGrabbables;
-        private static ConfigEntry<string> checkToggleKey;
-        private static ConfigEntry<string> checkKey;
-        private static ConfigEntry<string> specifyKey;
+        private static ConfigEntry<Key> checkToggleKey;
+        private static ConfigEntry<Key> checkKey;
+        private static ConfigEntry<Key> specifyKey;
         private static ConfigEntry<float> checkInterval;
         private static ConfigEntry<float> maxRange;
         private static ConfigEntry<string> allowList;
@@ -32,9 +32,6 @@ namespace AutoMine
 
         private static float elapsed;
 
-        private static InputAction action;
-        private static InputAction actionM;
-        private static InputAction actionS;
         public static void Dbgl(string str = "", LogLevel logLevel = LogLevel.Debug)
         {
             if (isDebug.Value)
@@ -49,18 +46,12 @@ namespace AutoMine
             checkInterval = Config.Bind<float>("Options", "CheckInterval", 3f, "Seconds betweeen check");
             includeGrabbables = Config.Bind<bool>("Options", "IncludeGrabbables", false, "Enable grabbing grabbables");
             maxRange = Config.Bind<float>("Options", "MaxRange", 10f, "Range to check in meters");
-            checkToggleKey = Config.Bind<string>("Options", "IntervalCheckKey", "<Keyboard>/v", "Key to enable / disable interval checking");
-            checkKey = Config.Bind<string>("Options", "CheckKey", "<Keyboard>/c", "Key to check manually");
-            specifyKey = Config.Bind<string>("Options", "SpecifyKey", "<Keyboard>/b", "Key to specify a single type (while aiming at a node of that type).");
+            checkToggleKey = Config.Bind<Key>("Options", "IntervalCheckEnableKey", Key.V, "Key to enable / disable interval checking");
+            checkKey = Config.Bind<Key>("Options", "ManualCheckKey", Key.C, "Key to check manually");
+            specifyKey = Config.Bind<Key>("Options", "SpecifyTypeKey", Key.B, "Key to specify a single type (while aiming at a node of that type).");
             allowList = Config.Bind<string>("Options", "AllowList", "", "Comma-separated list of item IDs to allow mining (overrides DisallowList).");
             disallowList = Config.Bind<string>("Options", "DisallowList", "", "Comma-separated list of item IDs to disallow mining (if AllowList is empty)");
 
-            action = new InputAction(binding: checkToggleKey.Value);
-            action.Enable();
-            actionM = new InputAction(binding: checkKey.Value);
-            actionM.Enable();
-            actionS = new InputAction(binding: specifyKey.Value);
-            actionS.Enable();
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
             Dbgl("Plugin awake");
@@ -73,7 +64,7 @@ namespace AutoMine
             {
                 if (!modEnabled.Value)
                     return;
-                if (action.WasPressedThisFrame())
+                if (checkToggleKey.Value != Key.None && Keyboard.current != null && Keyboard.current[checkToggleKey.Value].wasPressedThisFrame)
                 {
                     intervalCheck.Value = !intervalCheck.Value;
                     if (Managers.GetManager<PopupsHandler>() != null)
@@ -82,14 +73,14 @@ namespace AutoMine
                         elapsed = checkInterval.Value;
                     return;
                 }
-                if (actionM.WasPressedThisFrame())
+                if (checkKey.Value != Key.None && Keyboard.current != null && Keyboard.current[checkKey.Value].wasPressedThisFrame)
                 {
                     Dbgl($"Pressed manual check key");
                     elapsed = 0;
                     CheckForNearbyMinables();
                     return;
                 }
-                if (actionS.WasPressedThisFrame())
+                if (specifyKey.Value != Key.None && Keyboard.current != null && Keyboard.current[specifyKey.Value].wasPressedThisFrame)
                 {
                     Dbgl($"Pressed specify key");
                     PlayerAimController c = FindAnyObjectByType<PlayerAimController>();
@@ -188,6 +179,7 @@ namespace AutoMine
                 var name = Readable.GetGroupName(worldObject.GetGroup());
                 if (m is ActionGrabable g2)
                 {
+                    AccessTools.Method(typeof(ActionGrabable), "InitIfNeeded").Invoke(g2, new object[0]);
                     AccessTools.Method(typeof(ActionGrabable), "Grab").Invoke(g2, new object[0]);
                     informationsDisplayer.AddInformation(2f, name, DataConfig.UiInformationsType.InInventory, worldObject.GetGroup().GetImage());
                     count2++;

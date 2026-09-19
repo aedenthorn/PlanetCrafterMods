@@ -13,7 +13,7 @@ using Image = UnityEngine.UI.Image;
 
 namespace StorageAnywhere
 {
-    [BepInPlugin("aedenthorn.StorageAnywhere", "Storage Anywhere", "0.4.0")]
+    [BepInPlugin("aedenthorn.StorageAnywhere", "Storage Anywhere", "0.4.1")]
     public partial class BepInExPlugin : BaseUnityPlugin
     {
         private static BepInExPlugin context;
@@ -23,14 +23,11 @@ namespace StorageAnywhere
         public static ConfigEntry<bool> ignoreSingleCell;
         public static ConfigEntry<bool> ignoreUnnamed;
         private static ConfigEntry<string> ignoreTypes;
-        private static ConfigEntry<string> toggleKey;
-        private static ConfigEntry<string> leftKey;
-        private static ConfigEntry<string> rightKey;
+        private static ConfigEntry<Key> toggleKey;
+        private static ConfigEntry<Key> leftKey;
+        private static ConfigEntry<Key> rightKey;
         private static ConfigEntry<float> range;
 
-        private static InputAction action;
-        private static InputAction actionLeft;
-        private static InputAction actionRight;
         private static List<InventoryAssociated> inventoryList = new List<InventoryAssociated>();
         private static int currentIndex = 0;
         private static TMP_Dropdown dropDown;
@@ -49,17 +46,11 @@ namespace StorageAnywhere
             ignoreSingleCell = Config.Bind<bool>("Options", "IgnoreSingleCell", true, "Ignore single cell inventories");
             ignoreUnnamed = Config.Bind<bool>("Options", "IgnoreUnnamed", false, "Ignore unnamed inventories");
             ignoreTypes = Config.Bind<string>("Options", "IgnoreTypes", "Golden", "Ignore inventories with type names that contain strings in this list (comma-separated)");
-            toggleKey = Config.Bind<string>("Options", "ToggleKey", "<Keyboard>/i", "Key to toggle inventory UI");
-            leftKey = Config.Bind<string>("Options", "LeftKey", "<Keyboard>/leftArrow", "Key to switch to previous inventory");
-            rightKey = Config.Bind<string>("Options", "RightKey", "<Keyboard>/rightArrow", "Key to switch to next inventory");
+            toggleKey = Config.Bind<Key>("Options", "ToggleUIKey", Key.I, "Key to toggle inventory UI");
+            leftKey = Config.Bind<Key>("Options", "LeftSwitchKey", Key.LeftArrow, "Key to switch to previous inventory");
+            rightKey = Config.Bind<Key>("Options", "RightSwitchKey", Key.RightArrow, "Key to switch to next inventory");
             range = Config.Bind<float>("Options", "Range", 20f, "Range (m)");
 
-            action = new InputAction(binding: toggleKey.Value);
-            actionLeft = new InputAction(binding: leftKey.Value);
-            actionRight = new InputAction(binding: rightKey.Value);
-            action.Enable();
-            actionLeft.Enable();
-            actionRight.Enable();
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
             Dbgl("Plugin awake");
@@ -67,13 +58,13 @@ namespace StorageAnywhere
         }
 
         [HarmonyPatch(typeof(PlayerInputDispatcher), "Update")]
-        static class PlayerInputDispatcher_Update_Patch
+        public static class PlayerInputDispatcher_Update_Patch
         {
-            static void Postfix()
+            public void Postfix()
             {
                 if (!modEnabled.Value || Managers.GetManager<PlayersManager>() == null)
                     return;
-                if (action.WasPressedThisFrame())
+                if (toggleKey.Value != Key.None && Keyboard.current != null && Keyboard.current[toggleKey.Value].wasPressedThisFrame)
                 {
                     if (Managers.GetManager<WindowsHandler>().GetHasUiOpen())
                     {
@@ -92,14 +83,14 @@ namespace StorageAnywhere
                     currentIndex = 0;
                     inventoryList.Clear();
                 }
-                else if (actionRight.WasPressedThisFrame() && Managers.GetManager<WindowsHandler>().GetOpenedUi() == DataConfig.UiType.Container)
+                else if (rightKey.Value != Key.None && Keyboard.current != null && Keyboard.current[rightKey.Value].wasPressedThisFrame && Managers.GetManager<WindowsHandler>().GetOpenedUi() == DataConfig.UiType.Container)
                 {
                     inventoryList = GetNearbyInventories();
                     currentIndex++;
                     currentIndex %= inventoryList.Count;
                     SetInventories();
                 }
-                else if (actionLeft.WasPressedThisFrame() && Managers.GetManager<WindowsHandler>().GetOpenedUi() == DataConfig.UiType.Container)
+                else if (leftKey.Value != Key.None && Keyboard.current != null && Keyboard.current[leftKey.Value].wasPressedThisFrame && Managers.GetManager<WindowsHandler>().GetOpenedUi() == DataConfig.UiType.Container)
                 {
                     inventoryList = GetNearbyInventories();
                     currentIndex--;
@@ -110,7 +101,7 @@ namespace StorageAnywhere
             }
         }
 
-        private static void SetInventories()
+        public static void SetInventories()
         {
             Managers.GetManager<WindowsHandler>().CloseAllWindows();
 
@@ -220,18 +211,18 @@ namespace StorageAnywhere
             }
         }
 
-        private static void OnItemHover(EventTriggerCallbackData obj)
+        public static void OnItemHover(EventTriggerCallbackData obj)
         {
             Managers.GetManager<GlobalAudioHandler>().PlayUiHover();
         }
 
-        private static void ChangeInventory(int arg0)
+        public static void ChangeInventory(int arg0)
         {
             currentIndex = arg0;
             SetInventories();
         }
 
-        private static string GetObjectName(GameObject go, bool typeOnly = false, bool nameOnly = false)
+        public static string GetObjectName(GameObject go, bool typeOnly = false, bool nameOnly = false)
         {
             Transform t = go.transform;
             if (!typeOnly && t.GetComponent<WorldObjectText>() != null)
@@ -257,7 +248,7 @@ namespace StorageAnywhere
             return typeOnly || nameOnly ? "" : t.name.Replace("(Clone)", "");
         }
 
-        private static List<InventoryAssociated> GetNearbyInventories()
+        public static List<InventoryAssociated> GetNearbyInventories()
         {
             List<InventoryAssociated> result = new List<InventoryAssociated>();
             InventoryAssociated[] ial = FindObjectsOfType<InventoryAssociated>();
